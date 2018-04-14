@@ -34,8 +34,8 @@ void printResult();
 
 void setup()
 {
-  Serial.begin(19200);
-  
+  Serial.begin(9600);
+
   /*!
    *  @brief initailize the module.
    */
@@ -48,7 +48,7 @@ void loop()
    *  @brief request the position
    */
   myDFRobotIRPosition.requestPosition();
-  
+
   /*!
    *  @brief If there is data available, print it. Otherwise show the error message.
    */
@@ -63,7 +63,7 @@ void loop()
   else{
     Serial.println("Device not available!");
   }
-  
+
   delay(50);
 }
 
@@ -75,16 +75,9 @@ void printResult()
   for (int i=0; i<4; i++) {
     Serial.print(positionX[i]);
     Serial.print(",");
-    
+
     Serial.print(positionY[i]);
     Serial.print(";");
   }
   Serial.println();
 }
-
-
-
-
-
-
-
