@@ -1,3 +1,5 @@
+#include "AiEsp32RotaryEncoder.h"
+
 #define L_MOTOR_A 32
 #define L_MOTOR_B 33
 #define R_MOTOR_A 25
@@ -8,7 +10,17 @@
 #define RA_CHANNEL 4
 #define RB_CHANNEL 5
 
-#define ENC_CPR 48
+#define ENC_CPR 48 // number of holes on encoder disk
+#define WHEEL_CIRCUM 8.5 // circumference of the wheel in inches
+
+#define ENC_LA 10
+#define ENC_LB 11
+#define ENC_RA 12
+#define ENC_RB 13
+
+
+// AiEsp32RotaryEncoder l_enc = AiEsp32RotaryEncoder(ENC_LA, ENC_LB);
+// AiEsp32RotaryEncoder r_enc = AiEsp32RotaryEncoder(ENC_RA, ENC_RB);
 
 void setup() {
   ledcSetup(LA_CHANNEL, 100, 8);
