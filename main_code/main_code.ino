@@ -12,10 +12,10 @@
 
 // defines pins numbers
 const int fronttrigPin = 5;
-const int frontechoPin = 18;
-const int lefttrigPin = 19;
-const int leftechoPin = 36;
-const int righttrigPin = 39;
+const int frontechoPin = 36;
+const int lefttrigPin = 18;
+const int leftechoPin = 39;
+const int righttrigPin = 19;
 const int rightechoPin = 34;
 
 // defines variables
