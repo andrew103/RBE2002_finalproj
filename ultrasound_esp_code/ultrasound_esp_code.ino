@@ -1,9 +1,9 @@
 // defines pins numbers
-const int trigPin = 2;
-const int echoPin = 4;
+const int trigPin = 18;
+const int echoPin = 34;
 // defines variables
 long duration;
-int distance;
+double distance;
 void setup() {
 pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
 pinMode(echoPin, INPUT); // Sets the echoPin as an Input

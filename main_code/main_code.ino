@@ -11,12 +11,12 @@
 #define RB_CHANNEL 5
 
 // defines pins numbers
-const int fronttrigPin = 2;
-const int frontechoPin = 4;
-const int lefttrigPin = 16;
-const int leftechoPin = 17;
-const int righttrigPin = 21;
-const int rightechoPin = 22;
+const int fronttrigPin = 5;
+const int frontechoPin = 18;
+const int lefttrigPin = 19;
+const int leftechoPin = 36;
+const int righttrigPin = 39;
+const int rightechoPin = 34;
 
 // defines variables
 long duration;
