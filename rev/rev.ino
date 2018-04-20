@@ -12,14 +12,18 @@
  * object as well as the amount of MS remaining.
  */
 
-#include "forward.h"
+#include"stack.h"
+#include"forward.h"
+#include"right.h"
 
-
+stack Stack ;
 
 void setup() {
-	Serial.begin(9600); // Serial output begin. Only needed for debug
-	
+	Serial.begin(115200); // Serial output begin. Only needed for debug
+	Stack.initializeStack();
 }
 void loop() {
-
+  Stack.push(new forward());
+  Stack.push(new right());
+  Stack.action();
 }

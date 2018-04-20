@@ -1,9 +1,10 @@
 #include "stack.h"
 
 void stack::push(actionsAbstract* obj){
-  if (len != 30){
-    arr[len] = obj;
+  if ((len+1) >= 30){
     len++;
+    arr[len] = obj;
+    
   }
   else{
     /*
@@ -30,4 +31,8 @@ void stack ::action(){
   }
 }
 
+
+void stack:: initializeStack(){
+  len = -1;
+}
 

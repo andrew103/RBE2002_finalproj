@@ -25,6 +25,6 @@ void forward :: drive_motor(int lmotor, int rmotor) {
 }
 
 void forward :: action(){
-  
+  Serial.println("forward");
 }
 

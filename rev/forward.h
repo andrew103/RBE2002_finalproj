@@ -8,6 +8,7 @@ public:
   void drive_motor(int lmotor, int rmotor);
 	
 private:
+  double distance;
 	 #define L_MOTOR_A 32
   #define L_MOTOR_B 33
   #define R_MOTOR_A 25

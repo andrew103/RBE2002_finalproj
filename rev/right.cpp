@@ -25,5 +25,5 @@ void right::drive_motor(int lmotor, int rmotor) {
 }
 
 void right::action(){
-  
+  Serial.println("right");
 }

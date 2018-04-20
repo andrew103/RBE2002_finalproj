@@ -4,6 +4,7 @@
 
 class stack{
 public:
+  void initializeStack();
   void push(actionsAbstract* obj);
   actionsAbstract* pop();
   void action();
