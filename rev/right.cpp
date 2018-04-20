@@ -1,7 +1,7 @@
 #include "right.h"
 
 
-void drive_motor(int lmotor, int rmotor) {
+void right::drive_motor(int lmotor, int rmotor) {
  lmotor = constrain(lmotor, -255, 255);
   rmotor = constrain(rmotor, -255, 255);
 
@@ -24,6 +24,6 @@ void drive_motor(int lmotor, int rmotor) {
   }
 }
 
-void action(){
+void right::action(){
   
 }

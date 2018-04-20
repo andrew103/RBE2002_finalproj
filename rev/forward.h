@@ -1,6 +1,6 @@
-#pragma once
+
 #include "Arduino.h"
-//#include "actionsAbstract.h"
+#include "actionsAbstract.h"
 
 class forward :public actionsAbstract {
 public:
