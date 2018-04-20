@@ -4,10 +4,12 @@
 
 class stack{
 public:
-  void push(actionsAbstract obj);
-  void pop();
+  void push(actionsAbstract* obj);
+  actionsAbstract* pop();
   void action();
 	
 private:
-	actionsAbstract arr[20];
+	actionsAbstract* arr[30];
+ int len;
+
 };
