@@ -101,6 +101,7 @@ double frontDistanceToWall() {
   // Calculating the distance
   distance = duration * 0.034 / 2;
   // Prints the distance on the Serial Monitor
+  delay(5);
   return distance;
 }
 
@@ -117,6 +118,7 @@ double leftDistanceToWall() {
   // Calculating the distance
   distance = duration * 0.034 / 2;
   // Prints the distance on the Serial Monitor
+  delay(5);
   return distance;
 }
 
@@ -133,6 +135,7 @@ double rightDistanceToWall() {
   // Calculating the distance
   distance = duration * 0.034 / 2;
   // Prints the distance on the Serial Monitor
+  delay(5);
   return distance;
 }
 
@@ -156,6 +159,7 @@ void loop() {
             }
           }
           else {
+            drive_motor(0,0);
             movingActions = turnLeft;
           }
 
