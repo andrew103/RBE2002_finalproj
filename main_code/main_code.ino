@@ -22,19 +22,17 @@ const int rightechoPin = 34;
 long duration;
 double distance;
 double setpoint, input, output;
-double Kp=2, Ki=5, Kd=1;
+double Kp = 2, Ki = 5, Kd = 1;
 
 
 enum drivingStates {
   drive
-};
+} actions;
 
 enum movingStates {
-  forward,turnLeft
-};
-
-drivingStates actions = drive;
-movingStates movingActions = forward;
+  forward,
+  turnLeft
+} movingActions;
 
 PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
@@ -47,11 +45,11 @@ void setup() {
   pinMode(righttrigPin, OUTPUT); // Sets the righttrigPin as an Output
   pinMode(rightechoPin, INPUT); // Sets the rightechoPin as an Input
   Serial.begin(115200); // Starts the serial communication
-   
+
   setpoint = 14.5;
   myPID.SetMode(AUTOMATIC);
 
-    ledcSetup(LA_CHANNEL, 100, 8);
+  ledcSetup(LA_CHANNEL, 100, 8);
   ledcAttachPin(L_MOTOR_A, LA_CHANNEL);
 
   ledcSetup(LB_CHANNEL, 100, 8);
@@ -62,6 +60,9 @@ void setup() {
 
   ledcSetup(RB_CHANNEL, 100, 8);
   ledcAttachPin(R_MOTOR_B, RB_CHANNEL);
+
+  actions = drive;
+  movingActions = forward;
 }
 
 void drive_motor(int lmotor, int rmotor) {
@@ -139,28 +140,28 @@ void loop() {
   switch (actions) {
     case drive:
       switch (movingActions) {
-        case forward: if (frontDistanceToWall() >= 8) {
-         
-                      input = rightDistanceToWall();
-                      myPID.Compute();
-          
-                       if (rightDistanceToWall() < 14) {
-                           drive_motor(100, 120 + output);
-                        }
-                      else if (rightDistanceToWall() > 15) {
-                           drive_motor(120 + output, 100);
-                        }
-                 
-                      else{
-                          drive_motor(120, 120);
-                      }
-                     }
-                     else {
-                      movingActions = turnLeft;
-                     }
-                     break;
-         case turnLeft: break;
+        case forward:
+          if (frontDistanceToWall() >= 8) {
+            input = rightDistanceToWall();
+            myPID.Compute();
+
+            if (rightDistanceToWall() < 14) {
+              drive_motor(100, 120 + output);
+            }
+            else if (rightDistanceToWall() > 15) {
+              drive_motor(120 + output, 100);
+            }
+            else {
+              drive_motor(120, 120);
+            }
+          }
+          else {
+            movingActions = turnLeft;
+          }
+
+          break;
+        case turnLeft:
+          break;
       }
   }
 }
-
