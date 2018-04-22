@@ -13,7 +13,8 @@
 #define RA_CHANNEL 4
 #define RB_CHANNEL 5
 
-float target;
+float target = -1.0;
+int turn_amount = 180;
 Adafruit_BNO055 bno = Adafruit_BNO055();
 
 void setup() {
@@ -45,28 +46,16 @@ void loop() {
 //  sensors_event_t event;
 //  bno.getEvent(&event);
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  float start = event.x();
-  int turn_amount = 180;
-  target = start + turn_amount;
-  if (target < 0) {
-    target = 360 + target;
+  float current = event.x();
+  Serial.print(target);
+  Serial.print(", ");
+  Serial.println(current);
+  if (!(current <= target-0.3 || current >= target+0.3) || (target < 0)) {
+    drive_motor(0, 0);
+    delay(250);
+    create_target(current);
   }
-  else if (target > 360) {
-    target = target - 360;
-  }
-
-  while (1) {
-    //sensors_event_t event;
-    //bno.getEvent(&event);
-    imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-    Serial.print(target);
-    Serial.print(", ");
-    Serial.println(event.x());
-
-    if (!(event.x() <= target-0.3 || event.x() >= target+0.3)) {
-      break;
-    }
-
+  else {
     if (turn_amount > 0) {
       drive_motor(80, -80);
     }
@@ -74,8 +63,43 @@ void loop() {
       drive_motor(-80, 80);
     }
   }
-  drive_motor(0,0);
-  delay(250);
+
+  // while (1) {
+  //   //sensors_event_t event;
+  //   //bno.getEvent(&event);
+  //   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  //   Serial.print(target);
+  //   Serial.print(", ");
+  //   Serial.println(event.x());
+  //
+  //   if (!(event.x() <= target-0.3 || event.x() >= target+0.3)) {
+  //     break;
+  //   }
+  //
+  //   if (turn_amount > 0) {
+  //     drive_motor(80, -80);
+  //   }
+  //   else {
+  //     drive_motor(-80, 80);
+  //   }
+  // }
+  // drive_motor(0,0);
+  // delay(250);
+}
+
+void create_target(float current) {
+  target = current + turn_amount;
+
+  if (target < 0) {
+    target = 360 + target;
+  }
+  else if (target > 360) {
+    target = target - 360;
+  }
+
+  if (target == 360) {
+    target -= 0.3;
+  }
 }
 
 void drive_motor(int lmotor, int rmotor) {
