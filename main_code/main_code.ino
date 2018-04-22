@@ -22,7 +22,7 @@ const int rightechoPin = 34;
 long duration;
 double distance;
 double setpoint, input, output;
-double Kp=2, Ki=5, Kd=1;
+double Kp = 2, Ki = 5, Kd = 1;
 
 
 enum drivingStates {
@@ -30,7 +30,7 @@ enum drivingStates {
 };
 
 enum movingStates {
-  forward,turnLeft
+  forward, turnLeft
 };
 
 drivingStates actions = drive;
@@ -47,11 +47,11 @@ void setup() {
   pinMode(righttrigPin, OUTPUT); // Sets the righttrigPin as an Output
   pinMode(rightechoPin, INPUT); // Sets the rightechoPin as an Input
   Serial.begin(115200); // Starts the serial communication
-   
+
   setpoint = 14.5;
   myPID.SetMode(AUTOMATIC);
 
-    ledcSetup(LA_CHANNEL, 100, 8);
+  ledcSetup(LA_CHANNEL, 100, 8);
   ledcAttachPin(L_MOTOR_A, LA_CHANNEL);
 
   ledcSetup(LB_CHANNEL, 100, 8);
@@ -100,6 +100,7 @@ double frontDistanceToWall() {
   // Calculating the distance
   distance = duration * 0.034 / 2;
   // Prints the distance on the Serial Monitor
+  delay(5);
   return distance;
 }
 
@@ -116,6 +117,7 @@ double leftDistanceToWall() {
   // Calculating the distance
   distance = duration * 0.034 / 2;
   // Prints the distance on the Serial Monitor
+  delay(5);
   return distance;
 }
 
@@ -132,6 +134,7 @@ double rightDistanceToWall() {
   // Calculating the distance
   distance = duration * 0.034 / 2;
   // Prints the distance on the Serial Monitor
+  delay(5);
   return distance;
 }
 
@@ -139,28 +142,29 @@ void loop() {
   switch (actions) {
     case drive:
       switch (movingActions) {
-        case forward: if (frontDistanceToWall() >= 8) {
-         
-                      input = rightDistanceToWall();
-                      myPID.Compute();
-          
-                       if (rightDistanceToWall() < 14) {
-                           drive_motor(100, 120 + output);
-                        }
-                      else if (rightDistanceToWall() > 15) {
-                           drive_motor(120 + output, 100);
-                        }
-                 
-                      else{
-                          drive_motor(120, 120);
-                      }
-                     }
-                     else {
-                      movingActions = turnLeft;
-                     }
-                     break;
-         case turnLeft: break;
+        case forward:
+          if (frontDistanceToWall() >= 8) {
+            input = rightDistanceToWall();
+            myPID.Compute();
+
+            if (rightDistanceToWall() < 14) {
+              drive_motor(100, 120 + output);
+            }
+            else if (rightDistanceToWall() > 15) {
+              drive_motor(120 + output, 100);
+            }
+
+            else {
+              drive_motor(120, 120);
+            }
+          }
+          else {
+            movingActions = turnLeft;
+          }
+
+          break;
+        case turnLeft:
+          break;
       }
   }
 }
-
