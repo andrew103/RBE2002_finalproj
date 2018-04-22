@@ -14,7 +14,8 @@
 #define RB_CHANNEL 5
 
 float target = -1.0;
-int turn_amount = 180;
+int turn_amount;
+bool is_turning = false;
 Adafruit_BNO055 bno = Adafruit_BNO055();
 
 void setup() {
@@ -43,17 +44,27 @@ void setup() {
 }
 
 void loop() {
-//  sensors_event_t event;
-//  bno.getEvent(&event);
+  gyro_turn(90);
+}
+
+void gyro_turn(int amount) {
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float current = event.x();
-  Serial.print(target);
-  Serial.print(", ");
-  Serial.println(current);
-  if (!(current <= target-0.3 || current >= target+0.3) || (target < 0)) {
+
+  if (!is_turning) {
+    turn_amount = amount;
+    create_target(current);
+    is_turning = true;
+  }
+
+  // Serial.print(target);
+  // Serial.print(", ");
+  // Serial.println(current);
+
+  if (!(current <= target-0.3 || current >= target+0.3) || (target < 0) || (target > 360)) {
     drive_motor(0, 0);
     delay(250);
-    create_target(current);
+    is_turning = false;
   }
   else {
     if (turn_amount > 0) {
@@ -63,28 +74,6 @@ void loop() {
       drive_motor(-80, 80);
     }
   }
-
-  // while (1) {
-  //   //sensors_event_t event;
-  //   //bno.getEvent(&event);
-  //   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  //   Serial.print(target);
-  //   Serial.print(", ");
-  //   Serial.println(event.x());
-  //
-  //   if (!(event.x() <= target-0.3 || event.x() >= target+0.3)) {
-  //     break;
-  //   }
-  //
-  //   if (turn_amount > 0) {
-  //     drive_motor(80, -80);
-  //   }
-  //   else {
-  //     drive_motor(-80, 80);
-  //   }
-  // }
-  // drive_motor(0,0);
-  // delay(250);
 }
 
 void create_target(float current) {
