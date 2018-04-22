@@ -221,11 +221,20 @@ void loop() {
             }
           }
           else {
+            drive_motor(0, 0);
             movingActions = turnLeft;
           }
 
           break;
         case turnLeft:
+          if (frontDistanceToWall() < 30) {
+            gyro_turn(-90);
+          }
+          else {
+            drive_motor(0, 0);
+            movingActions = forward;
+          }
+
           break;
       }
   }
