@@ -1,5 +1,7 @@
 #include <PID_v1.h>
 #include <Wire.h>
+#include <ESPRotary.h>
+#include <math.h>
 #include "Adafruit_BNO055.h"
 #include "Adafruit_Sensor.h"
 #include "utility/imumaths.h"
@@ -13,6 +15,19 @@
 #define LB_CHANNEL 3
 #define RA_CHANNEL 4
 #define RB_CHANNEL 5
+
+#define ENC_CPR 2248 // number of counts per revolution
+#define WHEEL_CIRCUM 8.5 // circumference of the wheel in inches
+
+#define ENC_LA 16
+#define ENC_LB 17
+#define ENC_RA 13
+#define ENC_RB 14
+
+unsigned long global_xpos = 0;
+unsigned long global_ypos = 0;
+ESPRotary l_enc = ESPRotary(ENC_LA, ENC_LB, 1);
+ESPRotary r_enc = ESPRotary(ENC_RA, ENC_RB, 1);
 
 float target = -1.0;
 int turn_amount;
@@ -80,6 +95,14 @@ void setup() {
   }
 
   bno.setExtCrystalUse(true);
+
+  attachInterrupt(digitalPinToInterrupt(ENC_LA), lenc_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_LB), lenc_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_RA), renc_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_RB), renc_isr, CHANGE);
+
+  l_enc.resetPosition();
+  r_enc.resetPosition();
 }
 
 void gyro_turn(int amount) {
@@ -224,8 +247,18 @@ void loop() {
           }
           else {
             drive_motor(0, 0);
+
+            imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+            float current = event.x();
+
+            avg_enc = (r_enc.getPosition() + l_enc.getPosition()) / 2;
+            global_xpos += avg_enc * cos(current);
+            global_ypos += avg_enc * sin(current);
+
             movingActions = turnLeft;
-          }
+            l_enc.resetPosition();
+            r_enc.resetPosition();
+        }
 
           break;
         case turnLeft:
