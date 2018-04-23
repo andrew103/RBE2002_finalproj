@@ -31,7 +31,7 @@ const int rightechoPin = 34;
 long duration;
 double distance;
 double setpoint, input, output;
-double Kp = 2, Ki = 5, Kd = 1;
+double Kp = 1.7, Ki = 0, Kd = 0;
 
 
 enum drivingStates {
@@ -201,6 +201,8 @@ double rightDistanceToWall() {
 }
 
 void loop() {
+  Serial.println(frontDistanceToWall());
+  Serial.println(1);
   switch (actions) {
     case drive:
       switch (movingActions) {
@@ -209,15 +211,15 @@ void loop() {
             input = rightDistanceToWall();
             myPID.Compute();
 
-            if (rightDistanceToWall() < 14) {
-              drive_motor(100, 120 + output);
+            if (rightDistanceToWall() < 7) {
+              drive_motor(80, 80 + (output*0.25));
             }
-            else if (rightDistanceToWall() > 15) {
-              drive_motor(120 + output, 100);
+            else if (rightDistanceToWall() > 8) {
+              drive_motor(80 + (output*0.25), 80);
             }
 
             else {
-              drive_motor(120, 120);
+              drive_motor(80, 80);
             }
           }
           else {
@@ -227,10 +229,8 @@ void loop() {
 
           break;
         case turnLeft:
-          if (frontDistanceToWall() < 30) {
-            gyro_turn(-90);
-          }
-          else {
+          gyro_turn(-90);
+          if (!is_turning) {
             drive_motor(0, 0);
             movingActions = forward;
           }
