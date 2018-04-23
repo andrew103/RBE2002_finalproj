@@ -31,7 +31,7 @@ const int rightechoPin = 34;
 long duration;
 double distance;
 double setpoint, input, output;
-double Kp = 1.7, Ki = 0, Kd = 0;
+double Kp = 2.5, Ki = 0, Kd = 0.5;
 
 
 enum drivingStates {
@@ -212,14 +212,14 @@ void loop() {
             myPID.Compute();
 
             if (rightDistanceToWall() < 7) {
-              drive_motor(80, 80 + (output*0.25));
+              drive_motor(100, 100 + output);
             }
             else if (rightDistanceToWall() > 8) {
-              drive_motor(80 + (output*0.25), 80);
+              drive_motor(100 + output, 100);
             }
 
             else {
-              drive_motor(80, 80);
+              drive_motor(100, 100);
             }
           }
           else {
