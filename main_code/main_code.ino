@@ -14,7 +14,11 @@
 #define L_MOTOR_B 33
 #define R_MOTOR_A 25
 #define R_MOTOR_B 26
+#define FAN_MOTOR_A 2
+#define FAN_MOTOR_B 4
 
+#define FA_CHANNEL 0
+#define FB_CHANNEL 1
 #define LA_CHANNEL 2
 #define LB_CHANNEL 3
 #define RA_CHANNEL 4
@@ -127,6 +131,12 @@ void setup() {
 
   ledcSetup(RB_CHANNEL, 100, 8);
   ledcAttachPin(R_MOTOR_B, RB_CHANNEL);
+
+  ledcSetup(FA_CHANNEL, 100, 8);
+  ledcAttachPin(FAN_MOTOR_A, FA_CHANNEL);
+
+  ledcSetup(FB_CHANNEL, 100, 8);
+  ledcAttachPin(FAN_MOTOR_B, FB_CHANNEL);
 
   ledcSetup(SERV1_CHANNEL, 50, TIMER_WIDTH); // channel 1, 50 Hz, 16-bit width
   ledcAttachPin(SERVO_1, SERV1_CHANNEL);   // GPIO 23 assigned to channel 1
@@ -249,16 +259,16 @@ void run_fan(int speed) {
   speed = constrain(speed, -255, 255);
 
   if (speed > 0) {
-    ledcWrite(A_CHANNEL, speed);
-    ledcWrite(B_CHANNEL, 0);
+    ledcWrite(FA_CHANNEL, speed);
+    ledcWrite(FB_CHANNEL, 0);
   }
   else if (speed < 0) {
-    ledcWrite(A_CHANNEL, 0);
-    ledcWrite(B_CHANNEL, speed);
+    ledcWrite(FA_CHANNEL, 0);
+    ledcWrite(FB_CHANNEL, speed);
   }
   else {
-    ledcWrite(A_CHANNEL, 0);
-    ledcWrite(B_CHANNEL, 0);
+    ledcWrite(FA_CHANNEL, 0);
+    ledcWrite(FB_CHANNEL, 0);
   }
 }
 
@@ -445,7 +455,7 @@ void loop() {
             l_enc.resetPosition();
             r_enc.resetPosition();
             attackingActions = approach;
-
+          }
           break;
         case approach:
           if (frontDistanceToWall() >= 8) {
@@ -515,13 +525,13 @@ void loop() {
 
           IRcam.requestPosition();
           if (IRcam.available()) {
-            x_pos = IRcam.readY(0);
-            y_pos = IRcam.readX(0);
+            fire_x_pos = IRcam.readY(0);
+            fire_y_pos = IRcam.readX(0);
 
             // printResult();
           }
 
-          if (x_pos == 1023 && y_pos == 1023) {
+          if (fire_x_pos == 1023 && fire_y_pos == 1023) {
             run_fan(0);
             actions = backtrack;
           }
