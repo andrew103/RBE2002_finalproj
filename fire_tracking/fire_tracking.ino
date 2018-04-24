@@ -35,25 +35,25 @@ void setup() {
 void loop() {
   IRcam.requestPosition();
   if (IRcam.available()) {
-    x_pos = IRcam.readX(0);
-    y_pos = IRcam.readY(0);
+    x_pos = IRcam.readY(0);
+    y_pos = IRcam.readX(0);
 
     printResult();
   }
 
   if (x_pos != 1023 && y_pos != 1023) {
-    if (x_pos > 375) {
-      servo2_freq -= 2;
+    if (x_pos > 350) {
+      servo2_freq += 3;
     }
-    if (x_pos < 325) {
-      servo2_freq += 2;
+    if (x_pos < 250) {
+      servo2_freq -= 3;
     }
 
-    if (y_pos > 525) {
-      servo1_freq += 2;
+    if (y_pos > 350) {
+      servo1_freq += 3;
     }
-    if (y_pos < 475) {
-      servo1_freq -= 2;
+    if (y_pos < 250) {
+      servo1_freq -= 3;
     }
   }
 
