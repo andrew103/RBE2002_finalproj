@@ -1,9 +1,9 @@
 // defines pins numbers
 const int trigPin = 18;
-const int echoPin = 34;
+const int echoPin = 39;
 // defines variables
 long duration;
-double distance;
+int distance;
 void setup() {
 pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
 pinMode(echoPin, INPUT); // Sets the echoPin as an Input
@@ -24,4 +24,5 @@ distance= duration*0.034/2;
 // Prints the distance on the Serial Monitor
 Serial.print("Distance: ");
 Serial.println(distance);
+delay(5);
 }

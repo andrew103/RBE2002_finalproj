@@ -49,10 +49,9 @@ double wall_setpoint, wall_in, wall_out;
 double gyro_setpoint, gyro_in, gyro_out;
 double Kp = 2.5, Ki = 0, Kd = 0.65;
 
-
 enum drivingStates {
   drive
-};
+} actions;
 
 enum movingStates {
   forward,
