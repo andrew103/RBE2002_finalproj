@@ -416,7 +416,7 @@ void loop() {
 }
 
 void printResult() {
-  Serial.prin(x_pos);
+  Serial.print(x_pos);
   Serial.print(",");
 
   Serial.print(y_pos);
