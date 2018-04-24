@@ -345,8 +345,9 @@ void loop() {
             drive_motor(0, 0);
             update_global_pos();
             movingActions = turnRight;
-        }
+          }
 
+          actions = detect;
           break;
         case turnRight:
           gyro_turn(90);
@@ -391,7 +392,6 @@ void loop() {
 
           break;
       }
-      actions = detect;
       break;
     case detect:
       ledcWrite(SERV1_CHANNEL, servo1_freq);
