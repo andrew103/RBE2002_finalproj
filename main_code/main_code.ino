@@ -45,8 +45,9 @@ const int rightechoPin = 34;
 // defines variables
 long duration;
 double distance;
-double setpoint, input, output;
-double Kp = 2.5, Ki = 0, Kd = 0.5;
+double wall_setpoint, wall_in, wall_out;
+double gyro_setpoint, gyro_in, gyro_out;
+double Kp = 2.5, Ki = 0, Kd = 0.75;
 
 
 enum drivingStates {
@@ -64,7 +65,8 @@ enum movingStates {
 drivingStates actions = drive;
 movingStates movingActions = forward;
 
-PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
+PID wallPID(&wall_in, &wall_out, &wall_setpoint, Kp, Ki, Kd, DIRECT);
+PID gyroPID(&gyro_in, &gyro_out, &gyro_setpoint, Kp, Ki, Kd, DIRECT);
 
 //sets up all the pins and library functions
 void setup() {
@@ -76,8 +78,8 @@ void setup() {
   pinMode(rightechoPin, INPUT); // Sets the rightechoPin as an Input
   Serial.begin(115200); // Starts the serial communication
 
-  setpoint = 14.5;
-  myPID.SetMode(AUTOMATIC);
+  wall_setpoint = 8;
+  wallPID.SetMode(AUTOMATIC);
 
   ledcSetup(LA_CHANNEL, 100, 8);
   ledcAttachPin(L_MOTOR_A, LA_CHANNEL);
@@ -130,10 +132,10 @@ void gyro_turn(int amount) {
   }
   else {
     if (turn_amount > 0) {
-      drive_motor(80, -80);
+      drive_motor(90, -90);
     }
     else {
-      drive_motor(-80, 80);
+      drive_motor(-90, 90);
     }
   }
 }
@@ -150,6 +152,27 @@ void create_target(float current) {
 
   if (target == 360) {
     target -= 0.3;
+  }
+}
+
+void PID_drive(int lmotor, int rmotor) {
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  gyro_in = event.x();
+  gyroPID.Compute();
+
+  opp_set = gyro_setpoint + 180;
+  if (opp_set >= 360) {
+    opp_set -= 360;
+  }
+
+  if (gyro_in < gyro_setpoint || gyro_in > opp_set) {
+    drive_motor(lmotor + gyro_out, rmotor);
+  }
+  else if (gyro_in > gyro_setpoint || gyro_in < opp_set) {
+    drive_motor(lmotor, rmotor + gyro_out);
+  }
+  else {
+    drive_motor(lmotor, rmotor);
   }
 }
 
@@ -252,14 +275,14 @@ void loop() {
             movingActions = mini_jump;
           }
           else if (frontDistanceToWall() >= 8) {
-            input = leftDistanceToWall();
-            myPID.Compute();
+            wall_in = leftDistanceToWall();
+            wallPID.Compute();
 
-            if (leftDistanceToWall() < 7) {
-              drive_motor(100 + output, 100);
+            if (leftDistanceToWall() < 7.75) {
+              drive_motor(100 + wall_out, 100);
             }
             else if (leftDistanceToWall() > 8) {
-              drive_motor(100, 100 + output);
+              drive_motor(100, 100 + wall_out);
             }
 
             else {
@@ -294,7 +317,7 @@ void loop() {
 
           break;
         case jump:
-          if(abs(l_enc.getPosition()) >= ENC_CPR*2 && abs(r_enc.getPosition()) >= ENC_CPR*2) {
+          if(abs(l_enc.getPosition()) >= ENC_CPR && abs(r_enc.getPosition()) >= ENC_CPR) {
             drive_motor(0,0);
             update_global_pos();
             movingActions = forward;
@@ -305,7 +328,7 @@ void loop() {
 
           break;
         case mini_jump:
-          if(abs(l_enc.getPosition()) >= ENC_CPR*2 && abs(r_enc.getPosition()) >= ENC_CPR*2) {
+          if(abs(l_enc.getPosition()) >= ENC_CPR*0.65 && abs(r_enc.getPosition()) >= ENC_CPR*0.65) {
             drive_motor(0,0);
             update_global_pos();
             movingActions = turnLeft;
