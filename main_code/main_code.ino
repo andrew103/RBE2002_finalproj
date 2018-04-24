@@ -40,7 +40,7 @@
 #define TIMER_WIDTH 16
 
 int servo1_freq = 3500;
-int servo2_freq = 2000; // 6000 is approx directly forward
+int servo2_freq = 2500; // 6000 is approx directly forward
 
 DFRobotIRPosition IRcam;
 int fire_x_pos;
@@ -160,21 +160,21 @@ void gyro_turn(int amount) {
     is_turning = true;
   }
 
-  // Serial.print(target);
-  // Serial.print(", ");
-  // Serial.println(current);
+//   Serial.print(target);
+//   Serial.print(", ");
+//   Serial.println(current);
 
-  if (!(current <= target-0.3 || current >= target+0.3) || (target < 0) || (target > 360)) {
+  if (!(current <= target-0.5 || current >= target+0.5) || (target < 0) || (target > 360)) {
     drive_motor(0, 0);
     delay(250);
     is_turning = false;
   }
   else {
     if (turn_amount > 0) {
-      drive_motor(90, -90);
+      drive_motor(80, -80);
     }
     else {
-      drive_motor(-90, 90);
+      drive_motor(-80, 80);
     }
   }
 }
@@ -302,8 +302,8 @@ void update_global_pos() {
 }
 
 void loop() {
-  Serial.println(frontDistanceToWall());
-  Serial.println(1);
+  // Serial.println(frontDistanceToWall());
+  // Serial.println(1);
   switch (actions) {
     case drive:
       switch (movingActions) {
