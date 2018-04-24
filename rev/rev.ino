@@ -14,7 +14,7 @@
 
 #include"stack.h"
 #include"forward.h"
-#include"right.h"
+#include"left.h"
 
 stack Stack ;
 
@@ -24,6 +24,6 @@ void setup() {
 }
 void loop() {
   Stack.push(new forward());
-  Stack.push(new right());
+  Stack.push(new left());
   Stack.action();
 }
