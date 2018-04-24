@@ -47,7 +47,7 @@ long duration;
 double distance;
 double wall_setpoint, wall_in, wall_out;
 double gyro_setpoint, gyro_in, gyro_out;
-double Kp = 2.5, Ki = 0, Kd = 0.75;
+double Kp = 2.5, Ki = 0, Kd = 0.65;
 
 
 enum drivingStates {
@@ -160,7 +160,7 @@ void PID_drive(int lmotor, int rmotor) {
   gyro_in = event.x();
   gyroPID.Compute();
 
-  opp_set = gyro_setpoint + 180;
+  double opp_set = gyro_setpoint + 180;
   if (opp_set >= 360) {
     opp_set -= 360;
   }
@@ -278,8 +278,8 @@ void loop() {
             wall_in = leftDistanceToWall();
             wallPID.Compute();
 
-            if (leftDistanceToWall() < 7.75) {
-              drive_motor(100 + wall_out, 100);
+            if (leftDistanceToWall() < 7.95) {
+              drive_motor(105 + wall_out, 100);
             }
             else if (leftDistanceToWall() > 8) {
               drive_motor(100, 100 + wall_out);
@@ -323,7 +323,7 @@ void loop() {
             movingActions = forward;
           }
           else {
-            drive_motor(90, 90);
+            PID_drive(100, 100);
           }
 
           break;
@@ -334,7 +334,7 @@ void loop() {
             movingActions = turnLeft;
           }
           else {
-            drive_motor(90, 90);
+            PID_drive(100, 100);
           }
 
           break;
