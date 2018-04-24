@@ -14,8 +14,8 @@
 #define L_MOTOR_B 33
 #define R_MOTOR_A 25
 #define R_MOTOR_B 26
-#define FAN_MOTOR_A 2
-#define FAN_MOTOR_B 4
+#define FAN_MOTOR_A 4
+#define FAN_MOTOR_B 2
 
 #define FA_CHANNEL 0
 #define FB_CHANNEL 1
@@ -264,7 +264,7 @@ void run_fan(int speed) {
   }
   else if (speed < 0) {
     ledcWrite(FA_CHANNEL, 0);
-    ledcWrite(FB_CHANNEL, speed);
+    ledcWrite(FB_CHANNEL, -speed);
   }
   else {
     ledcWrite(FA_CHANNEL, 0);
@@ -434,11 +434,6 @@ void loop() {
         if (fire_x_pos < 350 && fire_x_pos > 250) {
           drive_motor(0, 0);
           update_global_pos();
-
-          servo2_freq = 6000;
-          ledcWrite(SERV1_CHANNEL, servo1_freq);
-          ledcWrite(SERV2_CHANNEL, servo2_freq);
-
           actions = attack;
         }
         else {
@@ -449,6 +444,10 @@ void loop() {
     case attack:
       switch (attackingActions) {
         case faceFlame:
+          servo2_freq = 6000;
+          ledcWrite(SERV1_CHANNEL, servo1_freq);
+          ledcWrite(SERV2_CHANNEL, servo2_freq);
+
           gyro_turn(90);
           if (!is_turning) {
             drive_motor(0, 0);
@@ -468,15 +467,20 @@ void loop() {
               // printResult();
             }
 
-            if (fire_y_pos < 300) {
+            if (fire_y_pos < 400) {
               servo1_freq -= 3;
-              if (fire_y_pos < 200) {
-                PID_drive(80, 80);
+              if (fire_y_pos < 150) {
+                PID_drive(100, 100);
               }
               else {
                 drive_motor(0, 0);
               }
             }
+            else {
+              PID_drive(100, 100);
+            }
+
+            ledcWrite(SERV1_CHANNEL, servo1_freq);
           }
           else {
             drive_motor(0, 0);
@@ -509,7 +513,7 @@ void loop() {
             }
           }
 
-          if (fire_x_pos < 350 && fire_x_pos > 250 && fire_y_pos < 350 && fire_y_pos > 250) {
+          if (fire_x_pos < 400 && fire_x_pos > 200 && fire_y_pos < 400 && fire_y_pos > 200) {
             attackingActions = extinguish;
           }
 
@@ -520,7 +524,7 @@ void loop() {
         case extinguish:
           // do some angle magic stuff to get z-coord of flame
 
-          run_fan(255);
+          run_fan(-255);
           delay(10000);
 
           IRcam.requestPosition();
