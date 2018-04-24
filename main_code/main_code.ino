@@ -256,10 +256,10 @@ void loop() {
             myPID.Compute();
 
             if (leftDistanceToWall() < 7) {
-              drive_motor(100, 100 + output);
+              drive_motor(100 + output, 100);
             }
             else if (leftDistanceToWall() > 8) {
-              drive_motor(100 + output, 100);
+              drive_motor(100, 100 + output);
             }
 
             else {
@@ -274,7 +274,7 @@ void loop() {
 
           break;
         case turnRight:
-          gyro_turn(-90);
+          gyro_turn(90);
           if (!is_turning) {
             drive_motor(0, 0);
             l_enc.resetPosition();
@@ -284,7 +284,7 @@ void loop() {
 
           break;
         case turnLeft:
-          gyro_turn(90);
+          gyro_turn(-90);
           if(!is_turning) {
             drive_motor(0, 0);
             l_enc.resetPosition();
