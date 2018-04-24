@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include <PID_v1.h>
 #include <Wire.h>
 #include <ESPRotary.h>
@@ -5,6 +6,8 @@
 #include "Adafruit_BNO055.h"
 #include "Adafruit_Sensor.h"
 #include "utility/imumaths.h"
+#include "DFRobotIRPosition.h"
+#include "esp32-hal-ledc.h"
 
 #define L_MOTOR_A 32
 #define L_MOTOR_B 33
@@ -23,6 +26,25 @@
 #define ENC_LB 17
 #define ENC_RA 13
 #define ENC_RB 14
+
+#define SERVO_1 15
+#define SERVO_2 23
+#define SERV1_CHANNEL 6
+#define SERV2_CHANNEL 7
+
+#define COUNT_LOW_1 1450
+#define COUNT_HIGH_1 4200
+#define COUNT_LOW_2 1450
+#define COUNT_HIGH_2 8000
+
+#define TIMER_WIDTH 16
+
+int servo1_freq = 3500;
+int servo2_freq = 2000; // 6000 is approx directly forward
+
+DFRobotIRPosition IRcam;
+int fire_x_pos;
+int fire_y_pos;
 
 unsigned long global_xpos = 0;
 unsigned long global_ypos = 0;
@@ -49,8 +71,11 @@ double wall_setpoint, wall_in, wall_out;
 double gyro_setpoint, gyro_in, gyro_out;
 double Kp = 2.5, Ki = 0, Kd = 0.65;
 
-enum drivingStates {
-  drive
+enum mainStates {
+  drive,
+  detect,
+  attack,
+  backtrack
 };
 
 enum movingStates {
@@ -61,8 +86,15 @@ enum movingStates {
   mini_jump
 };
 
-drivingStates actions = drive;
+enum attackingStates {
+  turnRight,
+  approach,
+  extinguish
+}
+
+mainStates actions = drive;
 movingStates movingActions = forward;
+attackingStates attackingActions = turnRight;
 
 PID wallPID(&wall_in, &wall_out, &wall_setpoint, Kp, Ki, Kd, DIRECT);
 PID gyroPID(&gyro_in, &gyro_out, &gyro_setpoint, Kp, Ki, Kd, DIRECT);
@@ -91,6 +123,14 @@ void setup() {
 
   ledcSetup(RB_CHANNEL, 100, 8);
   ledcAttachPin(R_MOTOR_B, RB_CHANNEL);
+
+  ledcSetup(SERV1_CHANNEL, 50, TIMER_WIDTH); // channel 1, 50 Hz, 16-bit width
+  ledcAttachPin(SERVO_1, SERV1_CHANNEL);   // GPIO 23 assigned to channel 1
+
+  ledcSetup(SERV2_CHANNEL, 50, TIMER_WIDTH); // channel 1, 50 Hz, 16-bit width
+  ledcAttachPin(SERVO_2, SERV2_CHANNEL);   // GPIO 23 assigned to channel 1
+
+  IRcam.begin();
 
   if(!bno.begin())
   {
@@ -338,7 +378,49 @@ void loop() {
 
           break;
       }
+      actions = detect;
+      break;
+    case detect:
+      ledcWrite(SERV1_CHANNEL, servo1_freq);
+      ledcWrite(SERV2_CHANNEL, servo2_freq);
+
+      IRcam.requestPosition();
+      if (IRcam.available()) {
+        fire_x_pos = IRcam.readY(0);
+        fire_y_pos = IRcam.readX(0);
+
+        // printResult();
+        if (fire_x_pos < 350 && fire_x_pos > 250) {
+          drive_motor(0, 0);
+          actions = attack;
+        }
+        else {
+          actions = drive;
+        }
+      }
+      break;
+    case attack:
+      switch (attackingActions) {
+        case turnRight:
+          break;
+        case approach:
+          break;
+        case extinguish:
+          actions = backtrack;
+          break;
+      }
+      break;
+    case backtrack:
+      break;
   }
+}
+
+void printResult() {
+  Serial.prin(x_pos);
+  Serial.print(",");
+
+  Serial.print(y_pos);
+  Serial.println(";");
 }
 
 void lenc_isr() {
