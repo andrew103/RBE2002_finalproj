@@ -57,7 +57,8 @@ enum movingStates {
   forward,
   turnRight,
   turnLeft,
-  jump
+  jump,
+  mini_jump
 };
 
 drivingStates actions = drive;
@@ -230,7 +231,7 @@ void update_global_pos() {
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float current = event.x();
 
-  avg_enc = (r_enc.getPosition() + l_enc.getPosition()) / 2;
+  int avg_enc = (r_enc.getPosition() + l_enc.getPosition()) / 2;
   global_xpos += avg_enc * cos(current);
   global_ypos += avg_enc * sin(current);
 
@@ -316,4 +317,12 @@ void loop() {
           break;
       }
   }
+}
+
+void lenc_isr() {
+  l_enc.loop();
+}
+
+void renc_isr() {
+  r_enc.loop();
 }
