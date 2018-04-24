@@ -90,6 +90,7 @@ enum movingStates {
 enum attackingStates {
   faceFlame,
   approach,
+  aim,
   extinguish
 };
 
@@ -241,6 +242,23 @@ void drive_motor(int lmotor, int rmotor) {
   else {
     ledcWrite(RA_CHANNEL, 0);
     ledcWrite(RB_CHANNEL, -rmotor);
+  }
+}
+
+void run_fan(int speed) {
+  speed = constrain(speed, -255, 255);
+
+  if (speed > 0) {
+    ledcWrite(A_CHANNEL, speed);
+    ledcWrite(B_CHANNEL, 0);
+  }
+  else if (speed < 0) {
+    ledcWrite(A_CHANNEL, 0);
+    ledcWrite(B_CHANNEL, speed);
+  }
+  else {
+    ledcWrite(A_CHANNEL, 0);
+    ledcWrite(B_CHANNEL, 0);
   }
 }
 
@@ -406,6 +424,11 @@ void loop() {
         if (fire_x_pos < 350 && fire_x_pos > 250) {
           drive_motor(0, 0);
           update_global_pos();
+
+          servo2_freq = 6000;
+          ledcWrite(SERV1_CHANNEL, servo1_freq);
+          ledcWrite(SERV2_CHANNEL, servo2_freq);
+
           actions = attack;
         }
         else {
@@ -416,11 +439,92 @@ void loop() {
     case attack:
       switch (attackingActions) {
         case faceFlame:
+          gyro_turn(90);
+          if (!is_turning) {
+            drive_motor(0, 0);
+            l_enc.resetPosition();
+            r_enc.resetPosition();
+            attackingActions = approach;
+
           break;
         case approach:
+          if (frontDistanceToWall() >= 8) {
+            IRcam.requestPosition();
+
+            if (IRcam.available()) {
+              fire_x_pos = IRcam.readY(0);
+              fire_y_pos = IRcam.readX(0);
+
+              // printResult();
+            }
+
+            if (fire_y_pos < 300) {
+              servo1_freq -= 3;
+              if (fire_y_pos < 200) {
+                PID_drive(80, 80);
+              }
+              else {
+                drive_motor(0, 0);
+              }
+            }
+          }
+          else {
+            drive_motor(0, 0);
+            update_global_pos();
+            attackingActions = aim;
+          }
+          break;
+        case aim:
+          IRcam.requestPosition();
+          if (IRcam.available()) {
+            fire_x_pos = IRcam.readY(0);
+            fire_y_pos= IRcam.readX(0);
+
+            // printResult();
+          }
+
+          if (fire_x_pos != 1023 && fire_y_pos != 1023) {
+            if (fire_x_pos > 350) {
+              servo2_freq += 3;
+            }
+            if (fire_x_pos < 250) {
+              servo2_freq -= 3;
+            }
+
+            if (fire_y_pos > 350) {
+              servo1_freq += 3;
+            }
+            if (fire_y_pos < 250) {
+              servo1_freq -= 3;
+            }
+          }
+
+          if (fire_x_pos < 350 && fire_x_pos > 250 && fire_y_pos < 350 && fire_y_pos > 250) {
+            attackingActions = extinguish;
+          }
+
+          ledcWrite(SERV1_CHANNEL, servo1_freq);
+          ledcWrite(SERV2_CHANNEL, servo2_freq);
+
           break;
         case extinguish:
-          actions = backtrack;
+          // do some angle magic stuff to get z-coord of flame
+
+          run_fan(255);
+          delay(10000);
+
+          IRcam.requestPosition();
+          if (IRcam.available()) {
+            x_pos = IRcam.readY(0);
+            y_pos = IRcam.readX(0);
+
+            // printResult();
+          }
+
+          if (x_pos == 1023 && y_pos == 1023) {
+            run_fan(0);
+            actions = backtrack;
+          }
           break;
       }
       break;
