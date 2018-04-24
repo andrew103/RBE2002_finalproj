@@ -87,14 +87,14 @@ enum movingStates {
 };
 
 enum attackingStates {
-  turnRight,
+  faceFlame,
   approach,
   extinguish
-}
+};
 
 mainStates actions = drive;
 movingStates movingActions = forward;
-attackingStates attackingActions = turnRight;
+attackingStates attackingActions = faceFlame;
 
 PID wallPID(&wall_in, &wall_out, &wall_setpoint, Kp, Ki, Kd, DIRECT);
 PID gyroPID(&gyro_in, &gyro_out, &gyro_setpoint, Kp, Ki, Kd, DIRECT);
@@ -401,7 +401,7 @@ void loop() {
       break;
     case attack:
       switch (attackingActions) {
-        case turnRight:
+        case faceFlame:
           break;
         case approach:
           break;
@@ -416,10 +416,10 @@ void loop() {
 }
 
 void printResult() {
-  Serial.print(x_pos);
+  Serial.print(fire_x_pos);
   Serial.print(",");
 
-  Serial.print(y_pos);
+  Serial.print(fire_y_pos);
   Serial.println(";");
 }
 
