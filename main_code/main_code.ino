@@ -51,7 +51,7 @@ double Kp = 2.5, Ki = 0, Kd = 0.65;
 
 enum drivingStates {
   drive
-} actions;
+};
 
 enum movingStates {
   forward,
