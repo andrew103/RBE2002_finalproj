@@ -2,6 +2,7 @@
 #include <PID_v1.h>
 #include <Wire.h>
 #include <ESPRotary.h>
+#include <LiquidCrystal_I2C.h>
 #include <math.h>
 #include "Adafruit_BNO055.h"
 #include "Adafruit_Sensor.h"
@@ -46,8 +47,8 @@ DFRobotIRPosition IRcam;
 int fire_x_pos;
 int fire_y_pos;
 
-unsigned long global_xpos = 0;
-unsigned long global_ypos = 0;
+long global_xpos = 0;
+long global_ypos = 0;
 ESPRotary l_enc = ESPRotary(ENC_LA, ENC_LB, 1);
 ESPRotary r_enc = ESPRotary(ENC_RA, ENC_RB, 1);
 
@@ -99,6 +100,8 @@ attackingStates attackingActions = faceFlame;
 PID wallPID(&wall_in, &wall_out, &wall_setpoint, Kp, Ki, Kd, DIRECT);
 PID gyroPID(&gyro_in, &gyro_out, &gyro_setpoint, Kp, Ki, Kd, DIRECT);
 
+LiquidCrystal_I2C lcd(0x3F,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+
 //sets up all the pins and library functions
 void setup() {
   pinMode(fronttrigPin, OUTPUT); // Sets the fronttrigPin as an Output
@@ -148,6 +151,9 @@ void setup() {
 
   l_enc.resetPosition();
   r_enc.resetPosition();
+
+  lcd.begin(21, 22);                      // initialize the lcd
+  lcd.backlight();
 }
 
 void gyro_turn(int amount) {
@@ -171,10 +177,10 @@ void gyro_turn(int amount) {
   }
   else {
     if (turn_amount > 0) {
-      drive_motor(80, -80);
+      drive_motor(90, -90);
     }
     else {
-      drive_motor(-80, 80);
+      drive_motor(-90, 90);
     }
   }
 }
@@ -294,16 +300,23 @@ void update_global_pos() {
   float current = event.x();
 
   int avg_enc = (r_enc.getPosition() + l_enc.getPosition()) / 2;
-  global_xpos += avg_enc * cos(current);
-  global_ypos += avg_enc * sin(current);
+  global_xpos += avg_enc * cos(current*(M_PI/180));
+  global_ypos += avg_enc * sin(current*(M_PI/180));
 
   l_enc.resetPosition();
   r_enc.resetPosition();
+
+  // Serial.print(global_xpos * cos(current*(M_PI/180)));
+  // Serial.print(", ");
+  // Serial.println(cos(current*(M_PI/180)));
 }
 
 void loop() {
-  // Serial.println(frontDistanceToWall());
-  // Serial.println(1);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
+  lcd.setCursor(0,1);
+  lcd.print((global_ypos*WHEEL_CIRCUM) / ENC_CPR);
   switch (actions) {
     case drive:
       switch (movingActions) {
@@ -392,6 +405,7 @@ void loop() {
         // printResult();
         if (fire_x_pos < 350 && fire_x_pos > 250) {
           drive_motor(0, 0);
+          update_global_pos();
           actions = attack;
         }
         else {
