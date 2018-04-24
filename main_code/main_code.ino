@@ -54,7 +54,10 @@ enum drivingStates {
 };
 
 enum movingStates {
-  forward, turnLeft
+  forward,
+  turnRight,
+  turnLeft,
+  jump
 };
 
 drivingStates actions = drive;
@@ -223,6 +226,18 @@ double rightDistanceToWall() {
   return distance;
 }
 
+void update_global_pos() {
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  float current = event.x();
+
+  avg_enc = (r_enc.getPosition() + l_enc.getPosition()) / 2;
+  global_xpos += avg_enc * cos(current);
+  global_ypos += avg_enc * sin(current);
+
+  l_enc.resetPosition();
+  r_enc.resetPosition();
+}
+
 void loop() {
   Serial.println(frontDistanceToWall());
   Serial.println(1);
@@ -230,14 +245,19 @@ void loop() {
     case drive:
       switch (movingActions) {
         case forward:
-          if (frontDistanceToWall() >= 8) {
-            input = rightDistanceToWall();
+          if (frontDistanceToWall() >= 15 && leftDistanceToWall() >= 15) {
+            drive_motor(0, 0);
+            update_global_pos();
+            movingActions = mini_jump;
+          }
+          else if (frontDistanceToWall() >= 8) {
+            input = leftDistanceToWall();
             myPID.Compute();
 
-            if (rightDistanceToWall() < 7) {
+            if (leftDistanceToWall() < 7) {
               drive_motor(100, 100 + output);
             }
-            else if (rightDistanceToWall() > 8) {
+            else if (leftDistanceToWall() > 8) {
               drive_motor(100 + output, 100);
             }
 
@@ -247,25 +267,50 @@ void loop() {
           }
           else {
             drive_motor(0, 0);
-
-            imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-            float current = event.x();
-
-            avg_enc = (r_enc.getPosition() + l_enc.getPosition()) / 2;
-            global_xpos += avg_enc * cos(current);
-            global_ypos += avg_enc * sin(current);
-
-            movingActions = turnLeft;
-            l_enc.resetPosition();
-            r_enc.resetPosition();
+            update_global_pos();
+            movingActions = turnRight;
         }
 
           break;
-        case turnLeft:
+        case turnRight:
           gyro_turn(-90);
           if (!is_turning) {
             drive_motor(0, 0);
+            l_enc.resetPosition();
+            r_enc.resetPosition();
             movingActions = forward;
+          }
+
+          break;
+        case turnLeft:
+          gyro_turn(90);
+          if(!is_turning) {
+            drive_motor(0, 0);
+            l_enc.resetPosition();
+            r_enc.resetPosition();
+            movingActions = jump;
+          }
+
+          break;
+        case jump:
+          if(abs(l_enc.getPosition()) >= ENC_CPR*2 && abs(r_enc.getPosition()) >= ENC_CPR*2) {
+            drive_motor(0,0);
+            update_global_pos();
+            movingActions = forward;
+          }
+          else {
+            drive_motor(90, 90);
+          }
+
+          break;
+        case mini_jump:
+          if(abs(l_enc.getPosition()) >= ENC_CPR*2 && abs(r_enc.getPosition()) >= ENC_CPR*2) {
+            drive_motor(0,0);
+            update_global_pos();
+            movingActions = turnLeft;
+          }
+          else {
+            drive_motor(90, 90);
           }
 
           break;
