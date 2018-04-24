@@ -1,4 +1,10 @@
 #include <PID_v1.h>
+#include <Wire.h>
+#include <ESPRotary.h>
+#include <math.h>
+#include "Adafruit_BNO055.h"
+#include "Adafruit_Sensor.h"
+#include "utility/imumaths.h"
 
 #define L_MOTOR_A 32
 #define L_MOTOR_B 33
@@ -9,6 +15,24 @@
 #define LB_CHANNEL 3
 #define RA_CHANNEL 4
 #define RB_CHANNEL 5
+
+#define ENC_CPR 2248 // number of counts per revolution
+#define WHEEL_CIRCUM 8.5 // circumference of the wheel in inches
+
+#define ENC_LA 16
+#define ENC_LB 17
+#define ENC_RA 13
+#define ENC_RB 14
+
+unsigned long global_xpos = 0;
+unsigned long global_ypos = 0;
+ESPRotary l_enc = ESPRotary(ENC_LA, ENC_LB, 1);
+ESPRotary r_enc = ESPRotary(ENC_RA, ENC_RB, 1);
+
+float target = -1.0;
+int turn_amount;
+bool is_turning = false;
+Adafruit_BNO055 bno = Adafruit_BNO055();
 
 // defines pins numbers
 const int fronttrigPin = 5;
@@ -21,8 +45,9 @@ const int rightechoPin = 34;
 // defines variables
 long duration;
 double distance;
-double setpoint, input, output;
-double Kp = 2, Ki = 5, Kd = 1;
+double wall_setpoint, wall_in, wall_out;
+double gyro_setpoint, gyro_in, gyro_out;
+double Kp = 2.5, Ki = 0, Kd = 0.65;
 
 
 enum drivingStates {
@@ -30,13 +55,18 @@ enum drivingStates {
 };
 
 enum movingStates {
-  forward, turnLeft
+  forward,
+  turnRight,
+  turnLeft,
+  jump,
+  mini_jump
 };
 
 drivingStates actions = drive;
 movingStates movingActions = forward;
 
-PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
+PID wallPID(&wall_in, &wall_out, &wall_setpoint, Kp, Ki, Kd, DIRECT);
+PID gyroPID(&gyro_in, &gyro_out, &gyro_setpoint, Kp, Ki, Kd, DIRECT);
 
 //sets up all the pins and library functions
 void setup() {
@@ -48,8 +78,8 @@ void setup() {
   pinMode(rightechoPin, INPUT); // Sets the rightechoPin as an Input
   Serial.begin(115200); // Starts the serial communication
 
-  setpoint = 14.5;
-  myPID.SetMode(AUTOMATIC);
+  wall_setpoint = 8;
+  wallPID.SetMode(AUTOMATIC);
 
   ledcSetup(LA_CHANNEL, 100, 8);
   ledcAttachPin(L_MOTOR_A, LA_CHANNEL);
@@ -62,6 +92,88 @@ void setup() {
 
   ledcSetup(RB_CHANNEL, 100, 8);
   ledcAttachPin(R_MOTOR_B, RB_CHANNEL);
+
+  if(!bno.begin())
+  {
+    /* There was a problem detecting the BNO055 ... check your connections */
+    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    while(1);
+  }
+
+  bno.setExtCrystalUse(true);
+
+  attachInterrupt(digitalPinToInterrupt(ENC_LA), lenc_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_LB), lenc_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_RA), renc_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_RB), renc_isr, CHANGE);
+
+  l_enc.resetPosition();
+  r_enc.resetPosition();
+}
+
+void gyro_turn(int amount) {
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  float current = event.x();
+
+  if (!is_turning) {
+    turn_amount = amount;
+    create_target(current);
+    is_turning = true;
+  }
+
+  // Serial.print(target);
+  // Serial.print(", ");
+  // Serial.println(current);
+
+  if (!(current <= target-0.3 || current >= target+0.3) || (target < 0) || (target > 360)) {
+    drive_motor(0, 0);
+    delay(250);
+    is_turning = false;
+  }
+  else {
+    if (turn_amount > 0) {
+      drive_motor(90, -90);
+    }
+    else {
+      drive_motor(-90, 90);
+    }
+  }
+}
+
+void create_target(float current) {
+  target = current + turn_amount;
+
+  if (target < 0) {
+    target = 360 + target;
+  }
+  else if (target > 360) {
+    target = target - 360;
+  }
+
+  if (target == 360) {
+    target -= 0.3;
+  }
+}
+
+void PID_drive(int lmotor, int rmotor) {
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  gyro_in = event.x();
+  gyroPID.Compute();
+
+  double opp_set = gyro_setpoint + 180;
+  if (opp_set >= 360) {
+    opp_set -= 360;
+  }
+
+  if (gyro_in < gyro_setpoint || gyro_in > opp_set) {
+    drive_motor(lmotor + gyro_out, rmotor);
+  }
+  else if (gyro_in > gyro_setpoint || gyro_in < opp_set) {
+    drive_motor(lmotor, rmotor + gyro_out);
+  }
+  else {
+    drive_motor(lmotor, rmotor);
+  }
 }
 
 void drive_motor(int lmotor, int rmotor) {
@@ -138,33 +250,102 @@ double rightDistanceToWall() {
   return distance;
 }
 
+void update_global_pos() {
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  float current = event.x();
+
+  int avg_enc = (r_enc.getPosition() + l_enc.getPosition()) / 2;
+  global_xpos += avg_enc * cos(current);
+  global_ypos += avg_enc * sin(current);
+
+  l_enc.resetPosition();
+  r_enc.resetPosition();
+}
+
 void loop() {
+  Serial.println(frontDistanceToWall());
+  Serial.println(1);
   switch (actions) {
     case drive:
       switch (movingActions) {
         case forward:
-          if (frontDistanceToWall() >= 8) {
-            input = rightDistanceToWall();
-            myPID.Compute();
+          if (frontDistanceToWall() >= 15 && leftDistanceToWall() >= 15) {
+            drive_motor(0, 0);
+            update_global_pos();
+            movingActions = mini_jump;
+          }
+          else if (frontDistanceToWall() >= 8) {
+            wall_in = leftDistanceToWall();
+            wallPID.Compute();
 
-            if (rightDistanceToWall() < 14) {
-              drive_motor(100, 120 + output);
+            if (leftDistanceToWall() < 7.95) {
+              drive_motor(105 + wall_out, 100);
             }
-            else if (rightDistanceToWall() > 15) {
-              drive_motor(120 + output, 100);
+            else if (leftDistanceToWall() > 8) {
+              drive_motor(100, 100 + wall_out);
             }
 
             else {
-              drive_motor(120, 120);
+              drive_motor(100, 100);
             }
           }
           else {
-            movingActions = turnLeft;
+            drive_motor(0, 0);
+            update_global_pos();
+            movingActions = turnRight;
+        }
+
+          break;
+        case turnRight:
+          gyro_turn(90);
+          if (!is_turning) {
+            drive_motor(0, 0);
+            l_enc.resetPosition();
+            r_enc.resetPosition();
+            movingActions = forward;
           }
 
           break;
         case turnLeft:
+          gyro_turn(-90);
+          if(!is_turning) {
+            drive_motor(0, 0);
+            l_enc.resetPosition();
+            r_enc.resetPosition();
+            movingActions = jump;
+          }
+
+          break;
+        case jump:
+          if(abs(l_enc.getPosition()) >= ENC_CPR && abs(r_enc.getPosition()) >= ENC_CPR) {
+            drive_motor(0,0);
+            update_global_pos();
+            movingActions = forward;
+          }
+          else {
+            PID_drive(100, 100);
+          }
+
+          break;
+        case mini_jump:
+          if(abs(l_enc.getPosition()) >= ENC_CPR*0.65 && abs(r_enc.getPosition()) >= ENC_CPR*0.65) {
+            drive_motor(0,0);
+            update_global_pos();
+            movingActions = turnLeft;
+          }
+          else {
+            PID_drive(100, 100);
+          }
+
           break;
       }
   }
+}
+
+void lenc_isr() {
+  l_enc.loop();
+}
+
+void renc_isr() {
+  r_enc.loop();
 }
