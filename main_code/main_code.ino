@@ -209,7 +209,7 @@ void gyroFollow(float targetAngle){
     current -= 360;
   }
 
-  float error = Kp*(target-current);
+  float error = Kp*(targetAngle-current);
   drive_motor(80+error,80-error);
 }
 
@@ -358,7 +358,10 @@ void update_global_pos() {
 
 void loop() {
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  gyroFollow(gtarget);
+  float dist = leftDistanceToWall();
+  float wall_error = dist - wall_setpoint;
+  Serial.println(wall_error);
+  gyroFollow(gtarget - (wall_error*2));
   }
 
 
