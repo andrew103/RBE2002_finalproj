@@ -89,6 +89,7 @@ enum mainStates {
 };
 
 enum movingStates {
+  find_wall,
   forward,
   turnRight,
   turnLeft,
@@ -111,7 +112,7 @@ enum backStates {
 };
 
 mainStates actions = drive;
-movingStates movingActions = forward;
+movingStates movingActions = find_wall;
 attackingStates attackingActions = faceFlame;
 backStates backActions = move;
 
@@ -396,6 +397,17 @@ void loop() {
   switch (actions) {
     case drive:
       switch (movingActions) {
+        case find_wall:
+          if (frontDistanceToWall() < 8) {
+            drive_motor(0,0);
+            update_global_pos();
+            movingActions = forward;
+          }
+          else {
+            PID_drive(100, 100);
+          }
+          
+          break;
         case forward:
           if (frontDistanceToWall() >= 15 && leftDistanceToWall() >= 15) {
             drive_motor(0, 0);
