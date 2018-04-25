@@ -379,9 +379,13 @@ void loop() {
   qtra.read(sensorValues);
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
   lcd.setCursor(0,1);
+  lcd.print("X ");
+  lcd.setCursor(3,1);
+  lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
+  lcd.setCursor(7,1);
+  lcd.print("Y ");
+  lcd.setCursor(9,1);
   lcd.print((global_ypos*WHEEL_CIRCUM) / ENC_CPR);
   switch (actions) {
     case drive:
@@ -497,6 +501,7 @@ void loop() {
           }
           else {
             PID_drive(-120, -120);
+            
           }
 
           break;
@@ -525,6 +530,8 @@ void loop() {
         if (fire_x_pos < 350 && fire_x_pos > 250) {
           drive_motor(0, 0);
           update_global_pos();
+          lcd.setCursor(0,0);
+          lcd.print("Flame Found");
           actions = attack;
         }
         else {
@@ -654,7 +661,8 @@ void loop() {
 
           run_fan(255);
           delay(20000);
-
+          lcd.setCursor(0,0);
+          lcd.print("Flame Blown");
           IRcam.requestPosition();
           if (IRcam.available()) {
             fire_x_pos = IRcam.readY(0);
@@ -676,6 +684,10 @@ void loop() {
       }
       break;
     case backtrack:
+            PID_drive(-120, -120);
+            delay(2000);
+            drive_motor(0,0);
+             gyro_turn(180);     
       break;
   }
 }
