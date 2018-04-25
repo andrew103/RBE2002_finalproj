@@ -25,7 +25,7 @@
 #define RB_CHANNEL 5
 
 #define ENC_CPR 2248 // number of counts per revolution
-#define WHEEL_CIRCUM 8.5 // circumference of the wheel in inches
+#define WHEEL_CIRCUM 8.65 // circumference of the wheel in inches
 
 #define ENC_LA 16
 #define ENC_LB 17
@@ -43,6 +43,8 @@
 #define COUNT_HIGH_2 8000
 
 #define TIMER_WIDTH 16
+
+unsigned long aim_timeout;
 
 int servo1_freq = 3500;
 int servo2_freq = 2500; // 6000 is approx directly forward
@@ -333,7 +335,7 @@ void update_global_pos() {
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float current = event.x();
 
-  int avg_enc = (r_enc.getPosition() + l_enc.getPosition()) / 2;
+  int avg_enc = l_enc.getPosition();//(r_enc.getPosition() + l_enc.getPosition()) / 2;
   global_xpos += avg_enc * cos(current*(M_PI/180));
   global_ypos += avg_enc * sin(current*(M_PI/180));
 
@@ -479,11 +481,27 @@ void loop() {
                 drive_motor(0, 0);
               }
               else {
-                PID_drive(100, 100);
+                if (fire_x_pos > 350) {
+                  PID_drive(100, 120);
+                }
+                else if (fire_x_pos < 250) {
+                  PID_drive(120, 100);
+                }
+                else {
+                  PID_drive(100, 100);
+                }
               }
             }
             else {
-              PID_drive(100, 100);
+              if (fire_x_pos > 350) {
+                PID_drive(100, 110);
+              }
+              else if (fire_x_pos < 250) {
+                PID_drive(110, 100);
+              }
+              else {
+                PID_drive(100, 100);
+              }
             }
 
             // if (fire_x_pos > 350) {
@@ -499,6 +517,7 @@ void loop() {
           else {
             drive_motor(0, 0);
             update_global_pos();
+            aim_timeout = millis();
             attackingActions = aim;
           }
           break;
@@ -530,6 +549,9 @@ void loop() {
           if (fire_x_pos < 450 && fire_x_pos > 50 && fire_y_pos < 450 && fire_y_pos > 150) {
             attackingActions = extinguish;
           }
+          if (millis() - aim_timeout >= 5000) {
+            attackingActions = extinguish;
+          }
 
           ledcWrite(SERV1_CHANNEL, servo1_freq);
           ledcWrite(SERV2_CHANNEL, servo2_freq);
@@ -539,7 +561,7 @@ void loop() {
           // do some angle magic stuff to get z-coord of flame
 
           run_fan(255);
-          delay(10000);
+          delay(20000);
 
           IRcam.requestPosition();
           if (IRcam.available()) {
