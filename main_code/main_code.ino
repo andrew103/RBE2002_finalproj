@@ -74,7 +74,7 @@ long duration;
 double distance;
 double wall_setpoint, wall_in, wall_out;
 double gyro_setpoint, gyro_in, gyro_out;
-double Kp = 2.5, Ki = 0, Kd = 0.65;
+double Kp = 2.5, Ki = 0, Kd = 0.7;
 
 enum mainStates {
   drive,
@@ -164,6 +164,9 @@ void setup() {
 
   lcd.begin(21, 22);                      // initialize the lcd
   lcd.backlight();
+
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  gyro_setpoint = event.x();
 }
 
 void gyro_turn(int amount) {
@@ -348,6 +351,7 @@ void loop() {
   lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
   lcd.setCursor(0,1);
   lcd.print((global_ypos*WHEEL_CIRCUM) / ENC_CPR);
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   switch (actions) {
     case drive:
       switch (movingActions) {
@@ -362,11 +366,14 @@ void loop() {
             wall_in = leftDistanceToWall();
             wallPID.Compute();
 
+            gyro_in = event.x();
+            gyroPID.Compute();
+
             if (leftDistanceToWall() < 7.95) {
-              drive_motor(115 + wall_out, 110);
+              drive_motor(115 + (wall_out + gyro_out), 110);
             }
             else if (leftDistanceToWall() > 8) {
-              drive_motor(110, 120 + wall_out);
+              drive_motor(110, 120 + (wall_out + gyro_out));
             }
 
             else {
@@ -386,20 +393,22 @@ void loop() {
           gyro_turn(90);
           l_enc.resetPosition();
           r_enc.resetPosition();
-          movingActions = forward;
 
+          gyro_setpoint = event.x();
+          movingActions = forward;
           break;
         case turnLeft:
           Serial.println(3);
           gyro_turn(-90);
           l_enc.resetPosition();
           r_enc.resetPosition();
-          movingActions = jump;
 
+          gyro_setpoint = event.x();
+          movingActions = jump;
           break;
         case jump:
           Serial.println(4);
-          if(abs(l_enc.getPosition()) >= ENC_CPR*1.1 && abs(r_enc.getPosition()) >= ENC_CPR*1.1) {
+          if(abs(l_enc.getPosition()) >= ENC_CPR*1.2 && abs(r_enc.getPosition()) >= ENC_CPR*1.2) {
             drive_motor(0,0);
             update_global_pos();
             movingActions = forward;
@@ -451,8 +460,9 @@ void loop() {
           gyro_turn(90);
           l_enc.resetPosition();
           r_enc.resetPosition();
-          attackingActions = approach;
 
+          gyro_setpoint = event.x();
+          attackingActions = approach;
           break;
         case approach:
           if (frontDistanceToWall() >= 10) {
