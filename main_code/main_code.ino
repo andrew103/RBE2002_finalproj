@@ -75,7 +75,7 @@ double distance;
 double wall_setpoint, wall_in, wall_out;
 double gyro_setpoint, gyro_in, gyro_out;
 double Kp = 15, Ki = 0, Kd = 0.7;
-
+float target = 0;
 enum mainStates {
   drive,
   detect,
@@ -144,8 +144,8 @@ void setup() {
   ledcAttachPin(SERVO_2, SERV2_CHANNEL);   // GPIO 23 assigned to channel 1
 
   IRcam.begin();
-
-  float target=event.x
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  target=event.x
   if(!bno.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
@@ -203,7 +203,7 @@ void gyro_turn(int amount) {
   }
 }
 
-void gryofollow(float targetAngle){
+void gyroFollow(float targetAngle){
   int Kp = 1;
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float current = event.x();
@@ -356,7 +356,9 @@ void update_global_pos() {
 
 void loop() {
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-}
+  gyroFollow(target)
+  }
+
 
 void printResult() {
   Serial.print(fire_x_pos);

@@ -76,7 +76,7 @@ void gyro_turn(int amount) {
   }
 }
 
-void gryofollow(float targetAngle){
+void gyroFollow(float targetAngle){
   int Kp = 1;
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float current = event.x();
