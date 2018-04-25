@@ -635,3 +635,7 @@ void lenc_isr() {
 void renc_isr() {
   r_enc.loop();
 }
+
+void cliff_isr() {
+  movingActions = reverse;
+}
