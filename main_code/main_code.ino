@@ -76,7 +76,7 @@ long duration;
 double distance;
 double wall_setpoint, wall_in, wall_out;
 double gyro_setpoint, gyro_in, gyro_out;
-double Kp = 15, Ki = 0, Kd = 0.7;
+double Kp = 1, Ki = 0, Kd = 0.7;
 float gtarget = 0;
 
 enum mainStates {
@@ -91,7 +91,9 @@ enum movingStates {
   turnRight,
   turnLeft,
   jump,
-  mini_jump
+  mini_jump,
+  reverse,
+  cliff_turn
 };
 
 enum attackingStates {
@@ -361,12 +363,17 @@ void update_global_pos() {
 }
 
 void loop() {
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
+  Serial.print(gtarget);
+  // lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
   lcd.setCursor(0,1);
-  lcd.print((global_ypos*WHEEL_CIRCUM) / ENC_CPR);
-  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  Serial.print(", ");
+  Serial.print(event.x());
+  Serial.print(", ");
+  Serial.println(leftDistanceToWall() - wall_setpoint);
+  // lcd.print((global_ypos*WHEEL_CIRCUM) / ENC_CPR);
   switch (actions) {
     case drive:
       switch (movingActions) {
@@ -397,13 +404,13 @@ void loop() {
             movingActions = turnRight;
           }
 
-          Serial.println("following");
           actions = detect;
           break;
         case turnRight:
           gyro_turn(90);
           l_enc.resetPosition();
           r_enc.resetPosition();
+          event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
 
           gyro_setpoint = event.x();
           gtarget = event.x();
@@ -413,6 +420,7 @@ void loop() {
           gyro_turn(-90);
           l_enc.resetPosition();
           r_enc.resetPosition();
+          event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
 
           gyro_setpoint = event.x();
           gtarget = event.x();
@@ -430,8 +438,6 @@ void loop() {
 
           break;
         case mini_jump:
-          Serial.println("here");
-          Serial.println(r_enc.getPosition());
           if(abs(l_enc.getPosition()) >= ENC_CPR*0.55 && abs(r_enc.getPosition()) >= ENC_CPR*0.55) {
             drive_motor(0,0);
             update_global_pos();
@@ -442,10 +448,30 @@ void loop() {
           }
 
           break;
+        case reverse:
+          if (abs(l_enc.getPosition()) <= 0 && abs(r_enc.getPosition()) <= 0) {
+            drive_motor(0,0);
+            update_global_pos();
+            movingActions = cliff_turn;
+          }
+          else {
+            PID_drive(120, 120);
+          }
+
+          break;
+        case cliff_turn::
+          gyro_turn(90);
+          l_enc.resetPosition();
+          r_enc.resetPosition();
+          event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+
+          gyro_setpoint = event.x();
+          gtarget = event.x();
+          movingActions = jump;
+          break;
       }
       break;
     case detect:
-      Serial.println("detecting");
       ledcWrite(SERV1_CHANNEL, servo1_freq);
       ledcWrite(SERV2_CHANNEL, servo2_freq);
 
