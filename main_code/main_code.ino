@@ -1,4 +1,5 @@
 #include "Arduino.h"
+#include <QTRSensors.h>
 #include <PID_v1.h>
 #include <Wire.h>
 #include <ESPRotary.h>
@@ -55,6 +56,7 @@ int fire_y_pos;
 
 long global_xpos = 0;
 long global_ypos = 0;
+long reverse_dist;
 ESPRotary l_enc = ESPRotary(ENC_LA, ENC_LB, 1);
 ESPRotary r_enc = ESPRotary(ENC_RA, ENC_RB, 1);
 
@@ -111,6 +113,9 @@ PID wallPID(&wall_in, &wall_out, &wall_setpoint, Kp, Ki, Kd, DIRECT);
 PID gyroPID(&gyro_in, &gyro_out, &gyro_setpoint, Kp, Ki, Kd, DIRECT);
 
 LiquidCrystal_I2C lcd(0x3F,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+
+QTRSensorsAnalog qtra((unsigned char[]) {35}, 1);
+unsigned int sensorValues[1];
 
 //sets up all the pins and library functions
 void setup() {
@@ -174,6 +179,11 @@ void setup() {
   gyro_setpoint = event.x();
   gtarget = event.x();
   // gyroPID.SetMode(AUTOMATIC);
+
+  for (int i = 0; i < 400; i++)  // make the calibration take about 10 seconds
+  {
+    qtra.calibrate();       // reads all sensors 10 times at 2.5 ms per six sensors (i.e. ~25 ms per call)
+  }
 }
 
 void gyro_turn(int amount) {
@@ -366,6 +376,7 @@ void update_global_pos() {
 }
 
 void loop() {
+  qtra.read(sensorValues);
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   lcd.clear();
   lcd.setCursor(0,0);
@@ -402,6 +413,12 @@ void loop() {
             movingActions = turnRight;
           }
 
+          if (sensorValues[0] > 4000) {
+            drive_motor(0, 0);
+            reverse_dist = 500;
+            update_global_pos();
+            movingActions = reverse;
+          }
           actions = detect;
           break;
         case turnRight:
@@ -434,6 +451,19 @@ void loop() {
             PID_drive(120, 120);
           }
 
+          if (sensorValues[0] > 4000) {
+            drive_motor(0, 0);
+            reverse_dist = (l_enc.getPosition() + r_enc.getPosition()) / 2;
+            update_global_pos();
+            movingActions = reverse;
+          }
+
+          if (frontDistanceToWall() < wall_setpoint) {
+            drive_motor(0, 0);
+            update_global_pos();
+            movingActions = turnRight;
+          }
+
           break;
         case mini_jump:
           if(abs(l_enc.getPosition()) >= ENC_CPR*0.55 && abs(r_enc.getPosition()) >= ENC_CPR*0.55) {
@@ -445,20 +475,33 @@ void loop() {
             PID_drive(120, 120);
           }
 
+          if (sensorValues[0] > 4000) {
+            drive_motor(0, 0);
+            reverse_dist = (l_enc.getPosition() + r_enc.getPosition()) / 2;
+            update_global_pos();
+            movingActions = reverse;
+          }
+
+          if (frontDistanceToWall() < wall_setpoint) {
+            drive_motor(0, 0);
+            update_global_pos();
+            movingActions = turnRight;
+          }
+
           break;
         case reverse:
-          if (abs(l_enc.getPosition()) <= 0 && abs(r_enc.getPosition()) <= 0) {
+          if (abs(l_enc.getPosition()) >= reverse_dist && abs(r_enc.getPosition()) >= reverse_dist) {
             drive_motor(0,0);
             update_global_pos();
             movingActions = cliff_turn;
           }
           else {
-            PID_drive(120, 120);
+            PID_drive(-120, -120);
           }
 
           break;
         case cliff_turn:
-          gyro_turn(90);
+          gyro_turn(95);
           l_enc.resetPosition();
           r_enc.resetPosition();
           event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
@@ -519,14 +562,26 @@ void loop() {
               }
               else {
                 if (fire_x_pos > 350) {
-                  PID_drive(100, 120);
+                  PID_drive(100, 125);
                 }
                 else if (fire_x_pos < 250) {
-                  PID_drive(120, 100);
+                  PID_drive(125, 100);
                 }
                 else {
                   PID_drive(100, 100);
                 }
+              }
+            }
+            else if (fire_y_pos > 500) {
+              servo1_freq += 10;
+              if (fire_x_pos > 350) {
+                PID_drive(100, 125);
+              }
+              else if (fire_x_pos < 250) {
+                PID_drive(125, 100);
+              }
+              else {
+                PID_drive(100, 100);
               }
             }
             else {
@@ -607,9 +662,14 @@ void loop() {
 
             // printResult();
           }
+          delay(5000);
 
           if (fire_x_pos == 1023 && fire_y_pos == 1023) {
             run_fan(0);
+
+            global_xpos += 10 * cos(event.x()*(M_PI/180));
+            global_ypos += 10 * sin(event.x()*(M_PI/180));
+
             actions = backtrack;
           }
           break;
@@ -634,4 +694,8 @@ void lenc_isr() {
 
 void renc_isr() {
   r_enc.loop();
+}
+
+void cliff_isr() {
+  movingActions = reverse;
 }
