@@ -76,6 +76,16 @@ void gyro_turn(int amount) {
   }
 }
 
+void gryofollow(float targetAngle){
+  int Kp = 1;
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  float current = event.x();
+  error = kp*(target-current);
+  drive_motor(80+error,80-error);
+}
+
+
+
 void create_target(float current) {
   target = current + turn_amount;
 

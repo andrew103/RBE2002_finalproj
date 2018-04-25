@@ -145,6 +145,7 @@ void setup() {
 
   IRcam.begin();
 
+  float target=event.x
   if(!bno.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
@@ -200,6 +201,14 @@ void gyro_turn(int amount) {
       }
     }
   }
+}
+
+void gryofollow(float targetAngle){
+  int Kp = 1;
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  float current = event.x();
+  error = kp*(target-current);
+  drive_motor(80+error,80-error);
 }
 
 void create_target(float current) {
@@ -346,219 +355,7 @@ void update_global_pos() {
 }
 
 void loop() {
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
-  lcd.setCursor(0,1);
-  lcd.print((global_ypos*WHEEL_CIRCUM) / ENC_CPR);
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  switch (actions) {
-    case drive:
-      switch (movingActions) {
-        case forward:
-          if (frontDistanceToWall() >= 15 && leftDistanceToWall() >= 15) {
-            drive_motor(0, 0);
-            update_global_pos();
-            movingActions = mini_jump;
-          }
-          else if (frontDistanceToWall() >= 8) {
-            wall_in = leftDistanceToWall();
-            wallPID.Compute();
-
-            gyro_in = event.x();
-            gyroPID.Compute();
-
-            if (leftDistanceToWall() < 7.95) {
-              drive_motor(110 + wall_out, 110);
-            }
-            else if (leftDistanceToWall() > 8) {
-              drive_motor(110, 125);
-            }
-            else {
-              drive_motor(110, 110);
-            }
-          }
-          else {
-            drive_motor(0, 0);
-            update_global_pos();
-            movingActions = turnRight;
-          }
-
-          Serial.println("following");
-          actions = detect;
-          break;
-        case turnRight:
-          gyro_turn(90);
-          l_enc.resetPosition();
-          r_enc.resetPosition();
-
-          gyro_setpoint = event.x();
-          movingActions = forward;
-          break;
-        case turnLeft:
-          gyro_turn(-90);
-          l_enc.resetPosition();
-          r_enc.resetPosition();
-
-          gyro_setpoint = event.x();
-          movingActions = jump;
-          break;
-        case jump:
-          if(abs(l_enc.getPosition()) >= ENC_CPR*1.2 && abs(r_enc.getPosition()) >= ENC_CPR*1.2) {
-            drive_motor(0,0);
-            update_global_pos();
-            movingActions = forward;
-          }
-          else {
-            PID_drive(120, 120);
-          }
-
-          break;
-        case mini_jump:
-          Serial.println("here");
-          Serial.println(r_enc.getPosition());
-          if(abs(l_enc.getPosition()) >= ENC_CPR*0.55 && abs(r_enc.getPosition()) >= ENC_CPR*0.55) {
-            drive_motor(0,0);
-            update_global_pos();
-            movingActions = turnLeft;
-          }
-          else {
-            PID_drive(120, 120);
-          }
-
-          break;
-      }
-      break;
-    case detect:
-      Serial.println("detecting");
-      ledcWrite(SERV1_CHANNEL, servo1_freq);
-      ledcWrite(SERV2_CHANNEL, servo2_freq);
-
-      IRcam.requestPosition();
-      if (IRcam.available()) {
-        fire_x_pos = IRcam.readY(0);
-        fire_y_pos = IRcam.readX(0);
-
-        // printResult();
-        if (fire_x_pos < 350 && fire_x_pos > 250) {
-          drive_motor(0, 0);
-          update_global_pos();
-          actions = attack;
-        }
-        else {
-          actions = drive;
-        }
-      }
-      break;
-    case attack:
-      switch (attackingActions) {
-        case faceFlame:
-          servo2_freq = 6000;
-
-          gyro_turn(90);
-          l_enc.resetPosition();
-          r_enc.resetPosition();
-
-          gyro_setpoint = event.x();
-          attackingActions = approach;
-          break;
-        case approach:
-          if (frontDistanceToWall() >= 10) {
-            IRcam.requestPosition();
-
-            if (IRcam.available()) {
-              fire_x_pos = IRcam.readY(0);
-              fire_y_pos = IRcam.readX(0);
-
-              // printResult();
-            }
-
-            if (fire_y_pos < 400) {
-              servo1_freq -= 10;
-              if (fire_y_pos < 150) {
-                drive_motor(0, 0);
-              }
-              else {
-                PID_drive(100, 100);
-              }
-            }
-            else {
-              PID_drive(100, 100);
-            }
-
-            // if (fire_x_pos > 350) {
-            //   servo2_freq += 3;
-            // }
-            // if (fire_x_pos < 250) {
-            //   servo2_freq -= 3;
-            // }
-
-            ledcWrite(SERV1_CHANNEL, servo1_freq);
-            ledcWrite(SERV2_CHANNEL, servo2_freq);
-          }
-          else {
-            drive_motor(0, 0);
-            update_global_pos();
-            attackingActions = aim;
-          }
-          break;
-        case aim:
-          IRcam.requestPosition();
-          if (IRcam.available()) {
-            fire_x_pos = IRcam.readY(0);
-            fire_y_pos = IRcam.readX(0);
-
-            // printResult();
-          }
-
-          if (fire_x_pos != 1023 && fire_y_pos != 1023) {
-            if (fire_x_pos > 350) {
-              servo2_freq += 5;
-            }
-            if (fire_x_pos < 250) {
-              servo2_freq -= 5;
-            }
-
-            if (fire_y_pos > 350) {
-              servo1_freq += 5;
-            }
-            if (fire_y_pos < 250) {
-              servo1_freq -= 5;
-            }
-          }
-
-          if (fire_x_pos < 450 && fire_x_pos > 50 && fire_y_pos < 450 && fire_y_pos > 150) {
-            attackingActions = extinguish;
-          }
-
-          ledcWrite(SERV1_CHANNEL, servo1_freq);
-          ledcWrite(SERV2_CHANNEL, servo2_freq);
-
-          break;
-        case extinguish:
-          // do some angle magic stuff to get z-coord of flame
-
-          run_fan(255);
-          delay(10000);
-
-          IRcam.requestPosition();
-          if (IRcam.available()) {
-            fire_x_pos = IRcam.readY(0);
-            fire_y_pos = IRcam.readX(0);
-
-            // printResult();
-          }
-
-          if (fire_x_pos == 1023 && fire_y_pos == 1023) {
-            run_fan(0);
-            actions = backtrack;
-          }
-          break;
-      }
-      break;
-    case backtrack:
-      break;
-  }
 }
 
 void printResult() {
