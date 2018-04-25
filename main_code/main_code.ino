@@ -74,8 +74,8 @@ long duration;
 double distance;
 double wall_setpoint, wall_in, wall_out;
 double gyro_setpoint, gyro_in, gyro_out;
-double Kp = 15, Ki = 0, Kd = 0.7;
-float target = 0;
+double Kp = 1, Ki = 0, Kd = 0.7;
+float gtarget = 0;
 enum mainStates {
   drive,
   detect,
@@ -145,7 +145,7 @@ void setup() {
 
   IRcam.begin();
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  target=event.x
+  gtarget=event.x();
   if(!bno.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
@@ -166,7 +166,6 @@ void setup() {
   lcd.begin(21, 22);                      // initialize the lcd
   lcd.backlight();
 
-  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   gyro_setpoint = event.x();
   // gyroPID.SetMode(AUTOMATIC);
 }
@@ -204,10 +203,13 @@ void gyro_turn(int amount) {
 }
 
 void gyroFollow(float targetAngle){
-  int Kp = 1;
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float current = event.x();
-  error = kp*(target-current);
+  if (current > 180) {
+    current -= 360;
+  }
+
+  float error = Kp*(target-current);
   drive_motor(80+error,80-error);
 }
 
@@ -356,7 +358,7 @@ void update_global_pos() {
 
 void loop() {
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  gyroFollow(target)
+  gyroFollow(gtarget);
   }
 
 
