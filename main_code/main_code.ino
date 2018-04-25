@@ -47,7 +47,7 @@
 unsigned long aim_timeout;
 
 int servo1_freq = 3500;
-int servo2_freq = 2500; // 6000 is approx directly forward
+int servo2_freq = 2700; // 6000 is approx directly forward
 
 DFRobotIRPosition IRcam;
 int fire_x_pos;
@@ -199,10 +199,10 @@ void gyro_turn(int amount) {
     }
     else {
       if (turn_amount > 0) {
-        drive_motor(90, -90);
+        drive_motor(100, -100);
       }
       else {
-        drive_motor(-90, 90);
+        drive_motor(-100, 100);
       }
     }
   }
@@ -229,9 +229,12 @@ void gyroFollow(float targetAngle){
   if (current > 180) {
     current -= 360;
   }
+  if (targetAngle > 180) {
+    targetAngle -= 360;
+  }
 
   float error = Kp*(targetAngle-current);
-  drive_motor(80+error,80-error);
+  drive_motor(100+error,100-error);
 }
 
 void PID_drive(int lmotor, int rmotor) {
@@ -366,14 +369,9 @@ void loop() {
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   lcd.clear();
   lcd.setCursor(0,0);
-  Serial.print(gtarget);
-  // lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
+  lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
   lcd.setCursor(0,1);
-  Serial.print(", ");
-  Serial.print(event.x());
-  Serial.print(", ");
-  Serial.println(leftDistanceToWall() - wall_setpoint);
-  // lcd.print((global_ypos*WHEEL_CIRCUM) / ENC_CPR);
+  lcd.print((global_ypos*WHEEL_CIRCUM) / ENC_CPR);
   switch (actions) {
     case drive:
       switch (movingActions) {
@@ -459,7 +457,7 @@ void loop() {
           }
 
           break;
-        case cliff_turn::
+        case cliff_turn:
           gyro_turn(90);
           l_enc.resetPosition();
           r_enc.resetPosition();
@@ -494,7 +492,7 @@ void loop() {
     case attack:
       switch (attackingActions) {
         case faceFlame:
-          servo2_freq = 6000;
+          servo2_freq = 6200;
 
           gyro_turn(90);
           l_enc.resetPosition();
@@ -533,10 +531,10 @@ void loop() {
             }
             else {
               if (fire_x_pos > 350) {
-                PID_drive(100, 110);
+                PID_drive(100, 125);
               }
               else if (fire_x_pos < 250) {
-                PID_drive(110, 100);
+                PID_drive(125, 100);
               }
               else {
                 PID_drive(100, 100);
