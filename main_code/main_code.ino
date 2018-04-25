@@ -116,7 +116,6 @@ void setup() {
   pinMode(righttrigPin, OUTPUT); // Sets the righttrigPin as an Output
   pinMode(rightechoPin, INPUT); // Sets the rightechoPin as an Input
   Serial.begin(115200); // Starts the serial communication
-
   wall_setpoint = 8;
   wallPID.SetMode(AUTOMATIC);
 
@@ -168,30 +167,33 @@ void setup() {
 }
 
 void gyro_turn(int amount) {
-  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
-  float current = event.x();
+  while (1) {
+    imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+    float current = event.x();
 
-  if (!is_turning) {
-    turn_amount = amount;
-    create_target(current);
-    is_turning = true;
-  }
+    if (!is_turning) {
+      turn_amount = amount;
+      create_target(current);
+      is_turning = true;
+    }
 
-//   Serial.print(target);
-//   Serial.print(", ");
-//   Serial.println(current);
+    //   Serial.print(target);
+    //   Serial.print(", ");
+    //   Serial.println(current);
 
-  if (!(current <= target-0.5 || current >= target+0.5) || (target < 0) || (target > 360)) {
-    drive_motor(0, 0);
-    delay(250);
-    is_turning = false;
-  }
-  else {
-    if (turn_amount > 0) {
-      drive_motor(90, -90);
+    if (!(current <= target-0.3 || current >= target+0.3) || (target < 0) || (target > 360)) {
+      drive_motor(0, 0);
+      delay(250);
+      is_turning = false;
+      break;
     }
     else {
-      drive_motor(-90, 90);
+      if (turn_amount > 0) {
+        drive_motor(100, -100);
+      }
+      else {
+        drive_motor(-100, 100);
+      }
     }
   }
 }
@@ -340,6 +342,7 @@ void update_global_pos() {
 }
 
 void loop() {
+  Serial.println(0);
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
@@ -349,6 +352,7 @@ void loop() {
     case drive:
       switch (movingActions) {
         case forward:
+          Serial.println(1);
           if (frontDistanceToWall() >= 15 && leftDistanceToWall() >= 15) {
             drive_motor(0, 0);
             update_global_pos();
@@ -362,7 +366,7 @@ void loop() {
               drive_motor(105 + wall_out, 100);
             }
             else if (leftDistanceToWall() > 8) {
-              drive_motor(100, 100 + wall_out);
+              drive_motor(100, 105 + wall_out);
             }
 
             else {
@@ -378,44 +382,42 @@ void loop() {
           actions = detect;
           break;
         case turnRight:
+          Serial.println(2);
           gyro_turn(90);
-          if (!is_turning) {
-            drive_motor(0, 0);
-            l_enc.resetPosition();
-            r_enc.resetPosition();
-            movingActions = forward;
-          }
+          l_enc.resetPosition();
+          r_enc.resetPosition();
+          movingActions = forward;
 
           break;
         case turnLeft:
+          Serial.println(3);
           gyro_turn(-90);
-          if(!is_turning) {
-            drive_motor(0, 0);
-            l_enc.resetPosition();
-            r_enc.resetPosition();
-            movingActions = jump;
-          }
+          l_enc.resetPosition();
+          r_enc.resetPosition();
+          movingActions = jump;
 
           break;
         case jump:
+          Serial.println(4);
           if(abs(l_enc.getPosition()) >= ENC_CPR && abs(r_enc.getPosition()) >= ENC_CPR) {
             drive_motor(0,0);
             update_global_pos();
             movingActions = forward;
           }
           else {
-            PID_drive(100, 100);
+            PID_drive(120, 120);
           }
 
           break;
         case mini_jump:
+          Serial.println(5);
           if(abs(l_enc.getPosition()) >= ENC_CPR*0.65 && abs(r_enc.getPosition()) >= ENC_CPR*0.65) {
             drive_motor(0,0);
             update_global_pos();
             movingActions = turnLeft;
           }
           else {
-            PID_drive(100, 100);
+            PID_drive(120, 120);
           }
 
           break;
@@ -445,16 +447,12 @@ void loop() {
       switch (attackingActions) {
         case faceFlame:
           servo2_freq = 6000;
-          ledcWrite(SERV1_CHANNEL, servo1_freq);
-          ledcWrite(SERV2_CHANNEL, servo2_freq);
 
           gyro_turn(90);
-          if (!is_turning) {
-            drive_motor(0, 0);
-            l_enc.resetPosition();
-            r_enc.resetPosition();
-            attackingActions = approach;
-          }
+          l_enc.resetPosition();
+          r_enc.resetPosition();
+          attackingActions = approach;
+
           break;
         case approach:
           if (frontDistanceToWall() >= 8) {
@@ -470,17 +468,25 @@ void loop() {
             if (fire_y_pos < 400) {
               servo1_freq -= 3;
               if (fire_y_pos < 150) {
-                PID_drive(100, 100);
+                drive_motor(0, 0);
               }
               else {
-                drive_motor(0, 0);
+                PID_drive(100, 100);
               }
             }
             else {
               PID_drive(100, 100);
             }
 
+            // if (fire_x_pos > 350) {
+            //   servo2_freq += 3;
+            // }
+            // if (fire_x_pos < 250) {
+            //   servo2_freq -= 3;
+            // }
+
             ledcWrite(SERV1_CHANNEL, servo1_freq);
+            ledcWrite(SERV2_CHANNEL, servo2_freq);
           }
           else {
             drive_motor(0, 0);
@@ -524,7 +530,7 @@ void loop() {
         case extinguish:
           // do some angle magic stuff to get z-coord of flame
 
-          run_fan(-255);
+          run_fan(255);
           delay(10000);
 
           IRcam.requestPosition();
