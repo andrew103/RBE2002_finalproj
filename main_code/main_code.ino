@@ -77,6 +77,7 @@ double distance;
 double wall_setpoint, wall_in, wall_out;
 double gyro_setpoint, gyro_in, gyro_out;
 double Kp = 15, Ki = 0, Kd = 0.7;
+float gtarget = 0;
 
 enum mainStates {
   drive,
@@ -169,6 +170,7 @@ void setup() {
 
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   gyro_setpoint = event.x();
+  gtarget = event.x();
   // gyroPID.SetMode(AUTOMATIC);
 }
 
@@ -217,6 +219,17 @@ void create_target(float current) {
   if (target == 360) {
     target -= 0.3;
   }
+}
+
+void gyroFollow(float targetAngle){
+  imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  float current = event.x();
+  if (current > 180) {
+    current -= 360;
+  }
+
+  float error = Kp*(targetAngle-current);
+  drive_motor(80+error,80-error);
 }
 
 void PID_drive(int lmotor, int rmotor) {
@@ -364,21 +377,19 @@ void loop() {
             movingActions = mini_jump;
           }
           else if (frontDistanceToWall() >= 8) {
-            wall_in = leftDistanceToWall();
-            wallPID.Compute();
+            float dist = leftDistanceToWall();
+            float wall_error = dist - wall_setpoint;
+            gyroFollow(gtarget - (wall_error*2));
 
-            gyro_in = event.x();
-            gyroPID.Compute();
-
-            if (leftDistanceToWall() < 7.95) {
-              drive_motor(110 + wall_out, 110);
-            }
-            else if (leftDistanceToWall() > 8) {
-              drive_motor(110, 125);
-            }
-            else {
-              drive_motor(110, 110);
-            }
+            // if (leftDistanceToWall() < 7.95) {
+            //   drive_motor(110 + wall_out, 110);
+            // }
+            // else if (leftDistanceToWall() > 8) {
+            //   drive_motor(110, 125);
+            // }
+            // else {
+            //   drive_motor(110, 110);
+            // }
           }
           else {
             drive_motor(0, 0);
@@ -395,6 +406,7 @@ void loop() {
           r_enc.resetPosition();
 
           gyro_setpoint = event.x();
+          gtarget = event.x();
           movingActions = forward;
           break;
         case turnLeft:
@@ -403,6 +415,7 @@ void loop() {
           r_enc.resetPosition();
 
           gyro_setpoint = event.x();
+          gtarget = event.x();
           movingActions = jump;
           break;
         case jump:
