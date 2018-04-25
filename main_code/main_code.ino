@@ -189,10 +189,10 @@ void gyro_turn(int amount) {
     }
     else {
       if (turn_amount > 0) {
-        drive_motor(100, -100);
+        drive_motor(110, -110);
       }
       else {
-        drive_motor(-100, 100);
+        drive_motor(-110, 110);
       }
     }
   }
@@ -363,14 +363,14 @@ void loop() {
             wallPID.Compute();
 
             if (leftDistanceToWall() < 7.95) {
-              drive_motor(105 + wall_out, 100);
+              drive_motor(115 + wall_out, 110);
             }
             else if (leftDistanceToWall() > 8) {
-              drive_motor(100, 105 + wall_out);
+              drive_motor(110, 120 + wall_out);
             }
 
             else {
-              drive_motor(100, 100);
+              drive_motor(110, 110);
             }
           }
           else {
@@ -399,7 +399,7 @@ void loop() {
           break;
         case jump:
           Serial.println(4);
-          if(abs(l_enc.getPosition()) >= ENC_CPR && abs(r_enc.getPosition()) >= ENC_CPR) {
+          if(abs(l_enc.getPosition()) >= ENC_CPR*1.1 && abs(r_enc.getPosition()) >= ENC_CPR*1.1) {
             drive_motor(0,0);
             update_global_pos();
             movingActions = forward;
@@ -411,7 +411,7 @@ void loop() {
           break;
         case mini_jump:
           Serial.println(5);
-          if(abs(l_enc.getPosition()) >= ENC_CPR*0.65 && abs(r_enc.getPosition()) >= ENC_CPR*0.65) {
+          if(abs(l_enc.getPosition()) >= ENC_CPR*0.55 && abs(r_enc.getPosition()) >= ENC_CPR*0.55) {
             drive_motor(0,0);
             update_global_pos();
             movingActions = turnLeft;
@@ -455,7 +455,7 @@ void loop() {
 
           break;
         case approach:
-          if (frontDistanceToWall() >= 8) {
+          if (frontDistanceToWall() >= 10) {
             IRcam.requestPosition();
 
             if (IRcam.available()) {
@@ -466,7 +466,7 @@ void loop() {
             }
 
             if (fire_y_pos < 400) {
-              servo1_freq -= 3;
+              servo1_freq -= 5;
               if (fire_y_pos < 150) {
                 drive_motor(0, 0);
               }
@@ -498,28 +498,28 @@ void loop() {
           IRcam.requestPosition();
           if (IRcam.available()) {
             fire_x_pos = IRcam.readY(0);
-            fire_y_pos= IRcam.readX(0);
+            fire_y_pos = IRcam.readX(0);
 
             // printResult();
           }
 
           if (fire_x_pos != 1023 && fire_y_pos != 1023) {
             if (fire_x_pos > 350) {
-              servo2_freq += 3;
+              servo2_freq += 5;
             }
             if (fire_x_pos < 250) {
-              servo2_freq -= 3;
+              servo2_freq -= 5;
             }
 
             if (fire_y_pos > 350) {
-              servo1_freq += 3;
+              servo1_freq += 5;
             }
             if (fire_y_pos < 250) {
-              servo1_freq -= 3;
+              servo1_freq -= 5;
             }
           }
 
-          if (fire_x_pos < 400 && fire_x_pos > 200 && fire_y_pos < 400 && fire_y_pos > 200) {
+          if (fire_x_pos < 450 && fire_x_pos > 150 && fire_y_pos < 450 && fire_y_pos > 150) {
             attackingActions = extinguish;
           }
 
