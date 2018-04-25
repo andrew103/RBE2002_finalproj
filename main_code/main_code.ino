@@ -532,6 +532,7 @@ void loop() {
           update_global_pos();
           lcd.setCursor(0,0);
           lcd.print("Flame Found");
+          delay(3000);
           actions = attack;
         }
         else {
