@@ -105,9 +105,15 @@ enum attackingStates {
   extinguish
 };
 
+enum backStates {
+  move,
+  all_stop
+};
+
 mainStates actions = drive;
 movingStates movingActions = forward;
 attackingStates attackingActions = faceFlame;
+backStates backActions = move;
 
 PID wallPID(&wall_in, &wall_out, &wall_setpoint, Kp, Ki, Kd, DIRECT);
 PID gyroPID(&gyro_in, &gyro_out, &gyro_setpoint, Kp, Ki, Kd, DIRECT);
@@ -501,7 +507,7 @@ void loop() {
           }
           else {
             PID_drive(-120, -120);
-            
+
           }
 
           break;
@@ -685,10 +691,18 @@ void loop() {
       }
       break;
     case backtrack:
-            PID_drive(-120, -120);
-            delay(2000);
-            drive_motor(0,0);
-             gyro_turn(180);     
+      switch (backActions) {
+        case move:
+          PID_drive(-120, -120);
+          delay(2000);
+          drive_motor(0,0);
+          gyro_turn(180);
+          backActions = all_stop;
+          break;
+        case all_stop:
+          drive_motor(0, 0);
+          break;
+      }
       break;
   }
 }
