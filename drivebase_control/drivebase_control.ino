@@ -54,7 +54,7 @@ void loop() {
   Serial.print(", Right = ");
   Serial.println(r_enc.getPosition());
 
-  if(abs(l_enc.getPosition()) > ENC_CPR*10 && abs(r_enc.getPosition()) > ENC_CPR*10) {
+  if(abs(l_enc.getPosition()) > ENC_CPR*3 && abs(r_enc.getPosition()) > ENC_CPR*3) {
     drive_motor(0,0);
   }
   else {
@@ -99,4 +99,3 @@ void lenc_isr() {
 void renc_isr() {
   r_enc.loop();
 }
-
