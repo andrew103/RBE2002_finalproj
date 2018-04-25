@@ -215,10 +215,10 @@ void gyro_turn(int amount) {
     }
     else {
       if (turn_amount > 0) {
-        drive_motor(100, -100);
+        drive_motor(90, -90);
       }
       else {
-        drive_motor(-100, 100);
+        drive_motor(-90, 90);
       }
     }
   }
