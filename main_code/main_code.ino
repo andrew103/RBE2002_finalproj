@@ -89,6 +89,7 @@ enum mainStates {
 };
 
 enum movingStates {
+  find_wall,
   forward,
   turnRight,
   turnLeft,
@@ -105,9 +106,15 @@ enum attackingStates {
   extinguish
 };
 
+enum backStates {
+  move,
+  all_stop
+};
+
 mainStates actions = drive;
-movingStates movingActions = forward;
+movingStates movingActions = find_wall;
 attackingStates attackingActions = faceFlame;
+backStates backActions = move;
 
 PID wallPID(&wall_in, &wall_out, &wall_setpoint, Kp, Ki, Kd, DIRECT);
 PID gyroPID(&gyro_in, &gyro_out, &gyro_setpoint, Kp, Ki, Kd, DIRECT);
@@ -209,10 +216,10 @@ void gyro_turn(int amount) {
     }
     else {
       if (turn_amount > 0) {
-        drive_motor(100, -100);
+        drive_motor(90, -90);
       }
       else {
-        drive_motor(-100, 100);
+        drive_motor(-90, 90);
       }
     }
   }
@@ -379,13 +386,28 @@ void loop() {
   qtra.read(sensorValues);
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
   lcd.setCursor(0,1);
+  lcd.print("X ");
+  lcd.setCursor(3,1);
+  lcd.print((global_xpos*WHEEL_CIRCUM) / ENC_CPR);
+  lcd.setCursor(7,1);
+  lcd.print("Y ");
+  lcd.setCursor(9,1);
   lcd.print((global_ypos*WHEEL_CIRCUM) / ENC_CPR);
   switch (actions) {
     case drive:
       switch (movingActions) {
+        case find_wall:
+          if (frontDistanceToWall() < 8) {
+            drive_motor(0,0);
+            update_global_pos();
+            movingActions = forward;
+          }
+          else {
+            PID_drive(100, 100);
+          }
+          
+          break;
         case forward:
           if (frontDistanceToWall() >= 15 && leftDistanceToWall() >= 15) {
             drive_motor(0, 0);
@@ -497,6 +519,7 @@ void loop() {
           }
           else {
             PID_drive(-120, -120);
+
           }
 
           break;
@@ -525,6 +548,9 @@ void loop() {
         if (fire_x_pos < 350 && fire_x_pos > 250) {
           drive_motor(0, 0);
           update_global_pos();
+          lcd.setCursor(0,0);
+          lcd.print("Flame Found");
+          delay(3000);
           actions = attack;
         }
         else {
@@ -654,7 +680,8 @@ void loop() {
 
           run_fan(255);
           delay(20000);
-
+          lcd.setCursor(0,0);
+          lcd.print("Flame Blown");
           IRcam.requestPosition();
           if (IRcam.available()) {
             fire_x_pos = IRcam.readY(0);
@@ -676,6 +703,18 @@ void loop() {
       }
       break;
     case backtrack:
+      switch (backActions) {
+        case move:
+          PID_drive(-120, -120);
+          delay(2000);
+          drive_motor(0,0);
+          gyro_turn(180);
+          backActions = all_stop;
+          break;
+        case all_stop:
+          drive_motor(0, 0);
+          break;
+      }
       break;
   }
 }
