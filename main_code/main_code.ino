@@ -10,6 +10,10 @@
 #include "utility/imumaths.h"
 #include "DFRobotIRPosition.h"
 #include "esp32-hal-ledc.h"
+#include"stack.h"
+#include"forward.h"
+#include"left.h"
+#include"right.h"
 
 #define L_MOTOR_A 32
 #define L_MOTOR_B 33
@@ -44,6 +48,8 @@
 #define COUNT_HIGH_2 8000
 
 #define TIMER_WIDTH 16
+
+stack Stack ;
 
 unsigned long aim_timeout;
 
