@@ -11,6 +11,7 @@
 #include "DFRobotIRPosition.h"
 #include "esp32-hal-ledc.h"
 #include"stack.h"
+#include"actionsAbstract.h"
 #include"forward.h"
 #include"left.h"
 #include"right.h"
@@ -197,6 +198,8 @@ void setup() {
   {
     qtra.calibrate();       // reads all sensors 10 times at 2.5 ms per six sensors (i.e. ~25 ms per call)
   }
+
+  Stack.initializeStack();
 }
 
 void gyro_turn(int amount) {
@@ -379,7 +382,7 @@ void update_global_pos() {
   int avg_enc = l_enc.getPosition();//(r_enc.getPosition() + l_enc.getPosition()) / 2;
   global_xpos += avg_enc * cos(current*(M_PI/180));
   global_ypos += avg_enc * sin(current*(M_PI/180));
-
+  Stack.push(new forward(avg_enc));
   l_enc.resetPosition();
   r_enc.resetPosition();
 
@@ -458,6 +461,7 @@ void loop() {
           gyro_setpoint = event.x();
           gtarget = event.x();
           movingActions = forward;
+          Stack.push(new left());
           break;
         case turnLeft:
           gyro_turn(-90);
@@ -468,6 +472,7 @@ void loop() {
           gyro_setpoint = event.x();
           gtarget = event.x();
           movingActions = jump;
+          Stack.push(new right());
           break;
         case jump:
           if(abs(l_enc.getPosition()) >= ENC_CPR*1.2 && abs(r_enc.getPosition()) >= ENC_CPR*1.2) {
@@ -538,6 +543,7 @@ void loop() {
           gyro_setpoint = event.x();
           gtarget = event.x();
           movingActions = jump;
+          Stack.push(new left());
           break;
       }
       break;

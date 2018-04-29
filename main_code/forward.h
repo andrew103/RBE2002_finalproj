@@ -8,7 +8,8 @@
 
 class forward :public actionsAbstract {
 public:
-   forward(float dist);
+   forward(int dist);
+   //forward();
    void action();
   void drive_motor(int lmotor, int rmotor);
   void lenc_isr();

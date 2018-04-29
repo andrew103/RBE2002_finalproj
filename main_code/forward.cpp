@@ -1,6 +1,9 @@
 #include "forward.h"
 
-forward::forward(float dist){
+//forward :: forward(){
+ 
+//}
+forward :: forward(int dist){
   travelDistance = dist;
 }
 void forward :: drive_motor(int lmotor, int rmotor) {
