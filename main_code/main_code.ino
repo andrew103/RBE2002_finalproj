@@ -741,10 +741,10 @@ void loop() {
       //     break;
       // }
       // break;
+      case end:
+        drive_motor(0, 0);
+        break;
   }
-  case end:
-    drive_motor(0, 0);
-    break;
 }
 
 void printResult() {

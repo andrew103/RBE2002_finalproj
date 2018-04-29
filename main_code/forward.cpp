@@ -105,7 +105,9 @@ void forward::gyroFollow(float targetAngle){
 
 void forward :: action(){
   //Serial.println("forward");
-  while(1){
+  l_enc.resetPosition();
+  r_enc.resetPosition();
+  while (1) {
     if (frontDistanceToWall() < 8 || (abs(l_enc.getPosition()) > travelDistance && abs(r_enc.getPosition()) > travelDistance)) {
       drive_motor(0, 0);
       break;
