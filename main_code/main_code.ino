@@ -10,11 +10,11 @@
 #include "utility/imumaths.h"
 #include "DFRobotIRPosition.h"
 #include "esp32-hal-ledc.h"
-#include"stack.h"
-#include"actionsAbstract.h"
-#include"forward.h"
-#include"left.h"
-#include"right.h"
+#include "stack.h"
+#include "actionsAbstract.h"
+#include "forward.h"
+#include "left.h"
+#include "right.h"
 
 #define L_MOTOR_A 32
 #define L_MOTOR_B 33
@@ -97,7 +97,7 @@ enum mainStates {
 
 enum movingStates {
   find_wall,
-  forward,
+  straight,
   turnRight,
   turnLeft,
   jump,
@@ -382,7 +382,13 @@ void update_global_pos() {
   int avg_enc = l_enc.getPosition();//(r_enc.getPosition() + l_enc.getPosition()) / 2;
   global_xpos += avg_enc * cos(current*(M_PI/180));
   global_ypos += avg_enc * sin(current*(M_PI/180));
-  Stack.push(new forward(avg_enc));
+
+  current += 180;
+  if (current >= 360) {
+    current -= 360;
+  }
+
+  Stack.push(new forward(avg_enc, current));
   l_enc.resetPosition();
   r_enc.resetPosition();
 
@@ -410,14 +416,14 @@ void loop() {
           if (frontDistanceToWall() < 8) {
             drive_motor(0,0);
             update_global_pos();
-            movingActions = forward;
+            movingActions = straight;
           }
           else {
             PID_drive(100, 100);
           }
-          
+
           break;
-        case forward:
+        case straight:
           if (frontDistanceToWall() >= 15 && leftDistanceToWall() >= 15) {
             drive_motor(0, 0);
             update_global_pos();
@@ -460,7 +466,7 @@ void loop() {
 
           gyro_setpoint = event.x();
           gtarget = event.x();
-          movingActions = forward;
+          movingActions = straight;
           Stack.push(new left());
           break;
         case turnLeft:
@@ -478,7 +484,7 @@ void loop() {
           if(abs(l_enc.getPosition()) >= ENC_CPR*1.2 && abs(r_enc.getPosition()) >= ENC_CPR*1.2) {
             drive_motor(0,0);
             update_global_pos();
-            movingActions = forward;
+            movingActions = straight;
           }
           else {
             PID_drive(120, 120);

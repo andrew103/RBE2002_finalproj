@@ -1,10 +1,11 @@
 #include "forward.h"
 
 //forward :: forward(){
- 
+
 //}
-forward :: forward(int dist){
+forward :: forward(int dist, float angle){
   travelDistance = dist;
+  gtarget = angle;
 }
 void forward :: drive_motor(int lmotor, int rmotor) {
  lmotor = constrain(lmotor, -255, 255);
@@ -88,22 +89,20 @@ void forward::gyroFollow(float targetAngle){
 void forward :: action(){
   //Serial.println("forward");
   while(1){
-            if (frontDistanceToWall() >= 8) {
-            float dist = rightDistanceToWall();
-            float wall_error = dist - wall_setpoint;
-            gyroFollow(gtarget - (wall_error*2));
-
-          }
-          else {
-            drive_motor(0,0);
-            break;
-          }
-         if(abs(l_enc.getPosition()) > ENC_CPR*10 && abs(r_enc.getPosition()) > ENC_CPR*10) {
-             drive_motor(0,0);
-              break;
-         }
-
-  
+    if (frontDistanceToWall() < 8 || (abs(l_enc.getPosition()) > travelDistance && abs(r_enc.getPosition()) > travelDistance)) {
+      drive_motor(0, 0);
+      break;
+    }
+    if (rightDistanceToWall() < 8) {
+      float wall_error = rightDistanceToWall() - wall_setpoint;
+      gyro_follow(gtarget + (wall_error*2));
+    }
+    else if (leftDistanceToWall() < 8) {
+      float wall_error = leftDistanceToWall() - wall_setpoint;
+      gyro_follow(gtarget - (wall_error*2));
+    }
+    else {
+      gyroFollow(gtarget);
+    }
   }
 }
-
