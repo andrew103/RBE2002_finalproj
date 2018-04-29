@@ -105,6 +105,11 @@ void forward::gyroFollow(float targetAngle){
 
 void forward :: action(){
   //Serial.println("forward");
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(gtarget);
+
+
   l_enc.resetPosition();
   r_enc.resetPosition();
   while (1) {

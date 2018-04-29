@@ -742,6 +742,8 @@ void loop() {
       // }
       // break;
       case end:
+        lcd.setCursor(0, 0);
+        lcd.print("Died");
         drive_motor(0, 0);
         break;
   }
