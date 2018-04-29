@@ -586,6 +586,8 @@ void loop() {
           l_enc.resetPosition();
           r_enc.resetPosition();
 
+          Stack.push(new left());
+
           gyro_setpoint = event.x();
           attackingActions = approach;
           break;

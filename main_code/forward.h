@@ -32,14 +32,14 @@ private:
   const int righttrigPin = 19;
   const int rightechoPin = 34;
   Adafruit_BNO055 bno = Adafruit_BNO055();
-  LiquidCrystal_I2C lcd(0x3F,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+  LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x3F,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
   double Kp = 1;
   int wall_setpoint = 8;
   float gtarget = 0;
-
   float travelDistance;
 
-
-
-
+  int renc1 = 0;
+  int renc2 = 0;
+  int lenc1 = 0;
+  int lenc2 = 0;
 };
