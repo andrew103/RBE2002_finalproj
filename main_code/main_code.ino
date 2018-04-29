@@ -92,7 +92,8 @@ enum mainStates {
   drive,
   detect,
   attack,
-  backtrack
+  backtrack,
+  end
 };
 
 enum movingStates {
@@ -721,20 +722,29 @@ void loop() {
       }
       break;
     case backtrack:
-      switch (backActions) {
-        case move:
-          PID_drive(-120, -120);
-          delay(2000);
-          drive_motor(0,0);
-          gyro_turn(180);
-          backActions = all_stop;
-          break;
-        case all_stop:
-          drive_motor(0, 0);
-          break;
-      }
+      gyro_turn(180);
+      Stack.action();
+      drive_motor(0, 0);
+      actions = end;
+
       break;
+      // switch (backActions) {
+      //   case move:
+      //     PID_drive(-120, -120);
+      //     delay(2000);
+      //     drive_motor(0,0);
+      //     gyro_turn(180);
+      //     backActions = all_stop;
+      //     break;
+      //   case all_stop:
+      //     drive_motor(0, 0);
+      //     break;
+      // }
+      // break;
   }
+  case end:
+    drive_motor(0, 0);
+    break;
 }
 
 void printResult() {

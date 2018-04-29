@@ -8,7 +8,7 @@
 
 class forward :public actionsAbstract {
 public:
-   forward(int dist);
+   forward(int dist, float angle);
    //forward();
    void action();
   void drive_motor(int lmotor, int rmotor);
@@ -16,8 +16,9 @@ public:
   void renc_isr();
   double frontDistanceToWall();
   double rightDistanceToWall();
+  double leftDistanceToWall();
   void gyroFollow(float targetAngle);
-	
+
 private:
   double distance;
   double duration;
@@ -25,6 +26,8 @@ private:
 ESPRotary r_enc = ESPRotary(ENC_RA, ENC_RB, 1);
 const int fronttrigPin = 5;
 const int frontechoPin = 36;
+const int lefttrigPin = 18;
+const int leftechoPin = 39;
 const int righttrigPin = 19;
 const int rightechoPin = 34;
 Adafruit_BNO055 bno = Adafruit_BNO055();
@@ -36,5 +39,5 @@ float travelDistance;
 
 
 
-  
+
 };

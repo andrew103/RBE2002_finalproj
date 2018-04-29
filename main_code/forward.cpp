@@ -72,6 +72,23 @@ double forward::rightDistanceToWall() {
   return distance;
 }
 
+double forward::leftDistanceToWall() {
+  // Clears the trigPin
+  digitalWrite(lefttrigPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(lefttrigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(lefttrigPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(leftechoPin, HIGH);
+  // Calculating the distance
+  distance = duration * 0.034 / 2;
+  // Prints the distance on the Serial Monitor
+  delay(5);
+  return distance;
+}
+
 void forward::gyroFollow(float targetAngle){
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float current = event.x();
@@ -95,11 +112,11 @@ void forward :: action(){
     }
     if (rightDistanceToWall() < 8) {
       float wall_error = rightDistanceToWall() - wall_setpoint;
-      gyro_follow(gtarget + (wall_error*2));
+      gyroFollow(gtarget + (wall_error*2));
     }
     else if (leftDistanceToWall() < 8) {
       float wall_error = leftDistanceToWall() - wall_setpoint;
-      gyro_follow(gtarget - (wall_error*2));
+      gyroFollow(gtarget - (wall_error*2));
     }
     else {
       gyroFollow(gtarget);
