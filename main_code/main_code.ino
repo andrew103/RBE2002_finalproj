@@ -50,7 +50,7 @@
 
 #define TIMER_WIDTH 16
 
-// stack Stack ;
+stack Stack ;
 
 unsigned long aim_timeout;
 
@@ -200,7 +200,7 @@ void setup() {
     qtra.calibrate();       // reads all sensors 10 times at 2.5 ms per six sensors (i.e. ~25 ms per call)
   }
 
-  // Stack.initializeStack();
+  Stack.initializeStack();
 }
 
 void gyro_turn(int amount) {
@@ -394,7 +394,7 @@ void update_global_pos() {
   lcd.print(r_enc.getPosition());
   delay(1000);
 
-  // Stack.push(new forward(avg_enc, current));
+  Stack.push(new forward(avg_enc, current));
   l_enc.resetPosition();
   r_enc.resetPosition();
 
@@ -473,7 +473,7 @@ void loop() {
           gyro_setpoint = event.x();
           gtarget = event.x();
           movingActions = straight;
-          // Stack.push(new left());
+          Stack.push(new left());
           break;
         case turnLeft:
           gyro_turn(-90);
@@ -484,7 +484,7 @@ void loop() {
           gyro_setpoint = event.x();
           gtarget = event.x();
           movingActions = jump;
-          // Stack.push(new right());
+          Stack.push(new right());
           break;
         case jump:
           if(abs(l_enc.getPosition()) >= ENC_CPR*1.2 && abs(r_enc.getPosition()) >= ENC_CPR*1.2) {
@@ -555,7 +555,7 @@ void loop() {
           gyro_setpoint = event.x();
           gtarget = event.x();
           movingActions = jump;
-          // Stack.push(new left());
+          Stack.push(new left());
           break;
       }
       break;
@@ -591,7 +591,7 @@ void loop() {
           l_enc.resetPosition();
           r_enc.resetPosition();
 
-          // Stack.push(new left());
+          Stack.push(new left());
 
           gyro_setpoint = event.x();
           attackingActions = approach;
@@ -720,6 +720,8 @@ void loop() {
           if (fire_x_pos == 1023 && fire_y_pos == 1023) {
             run_fan(0);
 
+            event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+
             global_xpos += (frontDistanceToWall() / 2.54) * cos(event.x()*(M_PI/180));
             global_ypos += (frontDistanceToWall() / 2.54) * sin(event.x()*(M_PI/180));
 
@@ -730,7 +732,7 @@ void loop() {
       break;
     case backtrack:
       gyro_turn(180);
-      // Stack.action();
+      Stack.action();
       drive_motor(0, 0);
       actions = end;
 
