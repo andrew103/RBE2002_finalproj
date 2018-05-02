@@ -380,7 +380,7 @@ void update_global_pos() {
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float current = event.x();
 
-  int avg_enc = l_enc.getPosition();//(r_enc.getPosition() + l_enc.getPosition()) / 2;
+  long avg_enc = r_enc.getPosition();//(r_enc.getPosition() + l_enc.getPosition()) / 2;
   global_xpos += avg_enc * cos(current*(M_PI/180));
   global_ypos += avg_enc * sin(current*(M_PI/180));
 
@@ -388,6 +388,11 @@ void update_global_pos() {
   if (current >= 360) {
     current -= 360;
   }
+
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print(r_enc.getPosition());
+  delay(1000);
 
   Stack.push(new forward(avg_enc, current));
   l_enc.resetPosition();

@@ -9,18 +9,20 @@
 
 class forward :public actionsAbstract {
 public:
-   forward(int dist, float angle);
+   forward(long dist, float angle);
    //forward();
    void action();
   void drive_motor(int lmotor, int rmotor);
-  void lenc_isr();
-  void renc_isr();
+  static void lenc_isr();
+  static void renc_isr();
   double frontDistanceToWall();
   double rightDistanceToWall();
   double leftDistanceToWall();
   void gyroFollow(float targetAngle);
 
 private:
+  static bool lenc_trigger;
+  static bool renc_trigger;
   double distance;
   double duration;
   ESPRotary l_enc = ESPRotary(ENC_LA, ENC_LB, 1);
@@ -36,7 +38,7 @@ private:
   double Kp = 1;
   int wall_setpoint = 8;
   float gtarget = 0;
-  float travelDistance;
+  long travelDistance;
 
   int renc1 = 0;
   int renc2 = 0;
