@@ -537,11 +537,14 @@ void loop() {
           break;
       }
 
-      if (rhome){
+      if (rHome){
         if(global_xpos<250, global_ypos<250){
           lcd.clear();
           lcd.setCursor(0,0);
-          lcd.print("lol made it bub")
+          lcd.print("lol made it bub");
+          while(1) {
+            drive_motor(0,0);
+          }
         }
       break;
 
@@ -731,6 +734,7 @@ void loop() {
       break;
   }
 }
+}
 
 void printResult() {
   Serial.print(fire_x_pos);
@@ -749,5 +753,6 @@ void renc_isr() {
 }
 
 void cliff_isr() {
+  delay(10);
   movingActions = reverse;
 }
