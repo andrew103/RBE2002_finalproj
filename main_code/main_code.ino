@@ -63,6 +63,8 @@ ESPRotary r_enc = ESPRotary(ENC_RA, ENC_RB, 1);
 float target = -1.0;
 int turn_amount;
 bool is_turning = false;
+bool rHome = false;
+
 Adafruit_BNO055 bno = Adafruit_BNO055();
 
 // defines pins numbers
@@ -406,7 +408,7 @@ void loop() {
           else {
             PID_drive(100, 100);
           }
-          
+
           break;
         case forward:
           if (frontDistanceToWall() >= 15 && leftDistanceToWall() >= 15) {
@@ -534,7 +536,16 @@ void loop() {
           movingActions = jump;
           break;
       }
+
+      if (rhome){
+        if(global_xpos<250, global_ypos<250){
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print("lol made it bub")
+        }
       break;
+
+
     case detect:
       ledcWrite(SERV1_CHANNEL, servo1_freq);
       ledcWrite(SERV2_CHANNEL, servo2_freq);
@@ -708,13 +719,15 @@ void loop() {
           PID_drive(-120, -120);
           delay(2000);
           drive_motor(0,0);
-          gyro_turn(180);
+          gyro_turn(-90);
           backActions = all_stop;
           break;
         case all_stop:
           drive_motor(0, 0);
           break;
       }
+      actions=drive;
+      rHome=true;
       break;
   }
 }
