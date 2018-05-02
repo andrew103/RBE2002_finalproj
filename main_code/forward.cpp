@@ -1,24 +1,17 @@
 #include "forward.h"
 
-//forward :: forward(){
-
-//}
 bool forward::lenc_trigger = false;
 bool forward::renc_trigger = false;
 
+// Class constructor- takes in distance in encoder ticks and heading
 forward :: forward(long dist, float angle){
   travelDistance = dist;
   gtarget = angle;
-
-  // lcd.begin(21, 22);                      // initialize the lcd
-  // lcd.backlight();
-  // lcd.clear();
-  // lcd.setCursor(0,0);
-  // lcd.print(travelDistance);
-  // delay(1000);
 }
 
+// Drives the left and right motors at the given values
 void forward :: drive_motor(int lmotor, int rmotor) {
+  // restrict given values to the operating range of the motor controller
   lmotor = constrain(lmotor, -255, 255);
   rmotor = constrain(rmotor, -255, 255);
 
@@ -41,71 +34,76 @@ void forward :: drive_motor(int lmotor, int rmotor) {
   }
 }
 
-// void forward::lenc_isr1() {
-//   // forward::lenc_trigger = true;
-//   // l_enc1.loop();
-//   }
-// }
-//
-// void forward::renc_isr1() {
-//   // forward::renc_trigger = true;
-//   // r_enc1.loop();
-// }
-
+// Measures the distance to a wall in front of the robot
 double forward::frontDistanceToWall() {
   // Clears the trigPin
   digitalWrite(fronttrigPin, LOW);
   delayMicroseconds(2);
+
   // Sets the trigPin on HIGH state for 10 micro seconds
   digitalWrite(fronttrigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(fronttrigPin, LOW);
+
   // Reads the echoPin, returns the sound wave travel time in microseconds
   duration = pulseIn(frontechoPin, HIGH);
+
   // Calculating the distance
   distance = duration * 0.034 / 2;
-  // Prints the distance on the Serial Monitor
+
   delay(5);
   return distance;
 }
 
+// Measures the distance to a wall on the right of the robot
 double forward::rightDistanceToWall() {
   // Clears the trigPin
   digitalWrite(righttrigPin, LOW);
   delayMicroseconds(2);
+
   // Sets the trigPin on HIGH state for 10 micro seconds
   digitalWrite(righttrigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(righttrigPin, LOW);
+
   // Reads the echoPin, returns the sound wave travel time in microseconds
   duration = pulseIn(rightechoPin, HIGH);
+
   // Calculating the distance
   distance = duration * 0.034 / 2;
-  // Prints the distance on the Serial Monitor
+
   delay(5);
   return distance;
 }
 
+// Measures the distance to a wall on the left of the robot
 double forward::leftDistanceToWall() {
   // Clears the trigPin
   digitalWrite(lefttrigPin, LOW);
   delayMicroseconds(2);
+
   // Sets the trigPin on HIGH state for 10 micro seconds
   digitalWrite(lefttrigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(lefttrigPin, LOW);
+
   // Reads the echoPin, returns the sound wave travel time in microseconds
   duration = pulseIn(leftechoPin, HIGH);
+
   // Calculating the distance
   distance = duration * 0.034 / 2;
-  // Prints the distance on the Serial Monitor
+
   delay(5);
   return distance;
 }
 
+// Drives in a straight line towards a given heading with proportional control
 void forward::gyroFollow(float targetAngle){
+  // get current heading
   imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   float current = event.x();
+
+  // update values to be in range -180 to 180
   if (current > 180) {
     current -= 360;
   }
@@ -117,26 +115,19 @@ void forward::gyroFollow(float targetAngle){
   drive_motor(100+error,100-error);
 }
 
+// Main replay procedure for moving forward some distance
 void forward :: action(){
-  //Serial.println("forward");
-   lcd.begin(21, 22);                      // initialize the lcd
-   lcd.backlight();
-  // lcd.clear();
-  // lcd.setCursor(0,0);
-  // lcd.print(gtarget);
-
+  // get current values of encoder sensors
   lenc1 = digitalRead(ENC_LA);
   lenc2 = digitalRead(ENC_LB);
   renc1 = digitalRead(ENC_RA);
   renc2 = digitalRead(ENC_RB);
 
+  // zero encoder counters
   l_enc1.resetPosition();
   r_enc1.resetPosition();
   while (1) {
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print(l_enc1.getPosition());
-
+    // count encoder ticks
     if (lenc1 != digitalRead(ENC_LA)) {
       lenc1 = digitalRead(ENC_LA);
       l_enc1.loop();
@@ -154,17 +145,7 @@ void forward :: action(){
       r_enc1.loop();
     }
 
-    // lenc_isr1();
-    // renc_isr1();
-    // if (forward::lenc_trigger) {
-    //   l_enc1.loop();
-    //   forward::lenc_trigger = false;
-    // }
-    // if (forward::renc_trigger) {
-    //   r_enc1.loop();
-    //   forward::renc_trigger = false;
-    // }
-
+    // drive forward while avoiding obstacles
     if (frontDistanceToWall() < 8 || (abs(l_enc1.getPosition()) > travelDistance && abs(r_enc1.getPosition()) > travelDistance)) {
       drive_motor(0, 0);
       break;

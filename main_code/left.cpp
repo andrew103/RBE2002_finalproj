@@ -1,8 +1,9 @@
 #include "left.h"
 
-
+// Drives the left and right motors at the given values
 void left::drive_motor(int lmotor, int rmotor) {
- lmotor = constrain(lmotor, -255, 255);
+  // restrict given values to the operating range of the motor controller
+  lmotor = constrain(lmotor, -255, 255);
   rmotor = constrain(rmotor, -255, 255);
 
   if (lmotor > 0) {
@@ -24,8 +25,10 @@ void left::drive_motor(int lmotor, int rmotor) {
   }
 }
 
+// Handles turning the given amount left/right
 void left:: gyro_turn(int amount) {
   while (1) {
+    // get current heading
     imu::Vector<3> event = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
     float current = event.x();
 
@@ -35,10 +38,7 @@ void left:: gyro_turn(int amount) {
       is_turning = true;
     }
 
-    //   Serial.print(target);
-    //   Serial.print(", ");
-    //   Serial.println(current);
-
+    // allow for exit condition within a reasonable error range
     if (!(current <= target-0.3 || current >= target+0.3) || (target < 0) || (target > 360)) {
       drive_motor(0, 0);
       delay(250);
@@ -56,6 +56,7 @@ void left:: gyro_turn(int amount) {
   }
 }
 
+// Helper function that creates a target setpoint for gyro_turn
 void left::create_target(float current) {
   target = current + turn_amount;
 
@@ -72,9 +73,5 @@ void left::create_target(float current) {
 }
 
 void left::action(){
-  //Serial.println("right");
-  
-    gyro_turn(-90);
-    
-  
+    gyro_turn(-90); // execute turn
 }
