@@ -422,7 +422,7 @@ void loop() {
           if (frontDistanceToWall() < 8) {
             drive_motor(0,0);
             update_global_pos();
-            movingActions = straight;
+            movingActions = turnRight;
           }
           else {
             PID_drive(100, 100);
