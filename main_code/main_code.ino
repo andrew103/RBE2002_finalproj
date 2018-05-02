@@ -476,10 +476,13 @@ void loop() {
           }
 
           if (sensorValues[0] > 4000) {
+            delay(20);
+            if (sensorValues[0] > 4000) {
             drive_motor(0, 0);
             reverse_dist = (l_enc.getPosition() + r_enc.getPosition()) / 2;
             update_global_pos();
             movingActions = reverse;
+          }
           }
 
           if (frontDistanceToWall() < wall_setpoint) {
