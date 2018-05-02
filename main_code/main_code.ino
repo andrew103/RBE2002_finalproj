@@ -179,11 +179,6 @@ void setup() {
 
   bno.setExtCrystalUse(true);
 
-  attachInterrupt(digitalPinToInterrupt(ENC_LA), lenc_isr, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENC_LB), lenc_isr, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENC_RA), renc_isr, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENC_RB), renc_isr, CHANGE);
-
   l_enc.resetPosition();
   r_enc.resetPosition();
 
@@ -201,6 +196,11 @@ void setup() {
   }
 
   Stack.initializeStack();
+
+  attachInterrupt(digitalPinToInterrupt(ENC_LA), lenc_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_LB), lenc_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_RA), renc_isr, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_RB), renc_isr, CHANGE);
 }
 
 void gyro_turn(int amount) {
@@ -430,6 +430,8 @@ void loop() {
 
           break;
         case straight:
+          lcd.setCursor(0,0);
+          lcd.print(r_enc.getPosition());
           if (frontDistanceToWall() >= 15 && leftDistanceToWall() >= 15) {
             drive_motor(0, 0);
             update_global_pos();

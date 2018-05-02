@@ -10,16 +10,11 @@ forward :: forward(long dist, float angle){
   travelDistance = dist;
   gtarget = angle;
 
-  attachInterrupt(digitalPinToInterrupt(ENC_LA), lenc_isr, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENC_LB), lenc_isr, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENC_RA), renc_isr, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENC_RB), renc_isr, CHANGE);
-
   // lcd.begin(21, 22);                      // initialize the lcd
   // lcd.backlight();
   // lcd.clear();
   // lcd.setCursor(0,0);
-  // lcd.print(dist);
+  // lcd.print(travelDistance);
   // delay(1000);
 }
 
@@ -46,31 +41,16 @@ void forward :: drive_motor(int lmotor, int rmotor) {
   }
 }
 
-void forward::lenc_isr() {
-  forward::lenc_trigger = true;
-  // l_enc.loop();
-  // if (lenc1 != digitalRead(ENC_LA)) {
-  //   lenc1 = digitalRead(ENC_LA);
-  //   l_enc.loop();
-  // }
-  // else if (lenc2 != digitalRead(ENC_LB)) {
-  //   lenc2 = digitalRead(ENC_LB);
-  //   l_enc.loop();
-  // }
-}
-
-void forward::renc_isr() {
-  forward::renc_trigger = true;
-  // r_enc.loop();
-  // if (renc1 != digitalRead(ENC_RA)) {
-  //   renc1 = digitalRead(ENC_RA);
-  //   r_enc.loop();
-  // }
-  // else if (renc2 != digitalRead(ENC_RB)) {
-  //   renc2 = digitalRead(ENC_RB);
-  //   r_enc.loop();
-  // }
-}
+// void forward::lenc_isr1() {
+//   // forward::lenc_trigger = true;
+//   // l_enc1.loop();
+//   }
+// }
+//
+// void forward::renc_isr1() {
+//   // forward::renc_trigger = true;
+//   // r_enc1.loop();
+// }
 
 double forward::frontDistanceToWall() {
   // Clears the trigPin
@@ -139,35 +119,53 @@ void forward::gyroFollow(float targetAngle){
 
 void forward :: action(){
   //Serial.println("forward");
-   // lcd.begin(21, 22);                      // initialize the lcd
-   // lcd.backlight();
+   lcd.begin(21, 22);                      // initialize the lcd
+   lcd.backlight();
   // lcd.clear();
   // lcd.setCursor(0,0);
   // lcd.print(gtarget);
 
-  // renc1 = digitalRead(ENC_RA);
-  // renc2 = digitalRead(ENC_RB);
-  // lenc1 = digitalRead(ENC_LA);
-  // lenc2 = digitalRead(ENC_LB);
+  lenc1 = digitalRead(ENC_LA);
+  lenc2 = digitalRead(ENC_LB);
+  renc1 = digitalRead(ENC_RA);
+  renc2 = digitalRead(ENC_RB);
 
-  l_enc.resetPosition();
-  r_enc.resetPosition();
+  l_enc1.resetPosition();
+  r_enc1.resetPosition();
   while (1) {
-    // lcd.clear();
-    // lcd.setCursor(0,0);
-    // lcd.print(travelDistance);
-    // lenc_isr();
-    // renc_isr();
-    if (forward::lenc_trigger) {
-      l_enc.loop();
-      forward::lenc_trigger = false;
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print(l_enc1.getPosition());
+
+    if (lenc1 != digitalRead(ENC_LA)) {
+      lenc1 = digitalRead(ENC_LA);
+      l_enc1.loop();
     }
-    if (forward::renc_trigger) {
-      r_enc.loop();
-      forward::renc_trigger = false;
+    else if (lenc2 != digitalRead(ENC_LB)) {
+      lenc2 = digitalRead(ENC_LB);
+      l_enc1.loop();
+    }
+    if (renc1 != digitalRead(ENC_RA)) {
+      renc1 = digitalRead(ENC_RA);
+      r_enc1.loop();
+    }
+    else if (renc2 != digitalRead(ENC_RB)) {
+      renc2 = digitalRead(ENC_RB);
+      r_enc1.loop();
     }
 
-    if (frontDistanceToWall() < 8 || (abs(l_enc.getPosition()) > travelDistance && abs(r_enc.getPosition()) > travelDistance)) {
+    // lenc_isr1();
+    // renc_isr1();
+    // if (forward::lenc_trigger) {
+    //   l_enc1.loop();
+    //   forward::lenc_trigger = false;
+    // }
+    // if (forward::renc_trigger) {
+    //   r_enc1.loop();
+    //   forward::renc_trigger = false;
+    // }
+
+    if (frontDistanceToWall() < 8 || (abs(l_enc1.getPosition()) > travelDistance && abs(r_enc1.getPosition()) > travelDistance)) {
       drive_motor(0, 0);
       break;
     }

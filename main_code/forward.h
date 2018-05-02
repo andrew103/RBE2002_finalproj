@@ -1,4 +1,3 @@
-#include <ESPRotary.h>
 #include "Arduino.h"
 #include "actionsAbstract.h"
 #include <LiquidCrystal_I2C.h>
@@ -13,8 +12,8 @@ public:
    //forward();
    void action();
   void drive_motor(int lmotor, int rmotor);
-  static void lenc_isr();
-  static void renc_isr();
+  // void lenc_isr1();
+  // void renc_isr1();
   double frontDistanceToWall();
   double rightDistanceToWall();
   double leftDistanceToWall();
@@ -25,8 +24,8 @@ private:
   static bool renc_trigger;
   double distance;
   double duration;
-  ESPRotary l_enc = ESPRotary(ENC_LA, ENC_LB, 1);
-  ESPRotary r_enc = ESPRotary(ENC_RA, ENC_RB, 1);
+  ESPRotary l_enc1 = ESPRotary(ENC_LA, ENC_LB, 1);
+  ESPRotary r_enc1 = ESPRotary(ENC_RA, ENC_RB, 1);
   const int fronttrigPin = 5;
   const int frontechoPin = 36;
   const int lefttrigPin = 18;
