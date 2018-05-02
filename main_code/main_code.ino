@@ -720,8 +720,8 @@ void loop() {
           if (fire_x_pos == 1023 && fire_y_pos == 1023) {
             run_fan(0);
 
-            global_xpos += 10 * cos(event.x()*(M_PI/180));
-            global_ypos += 10 * sin(event.x()*(M_PI/180));
+            global_xpos += (frontDistanceToWall() / 2.54) * cos(event.x()*(M_PI/180));
+            global_ypos += (frontDistanceToWall() / 2.54) * sin(event.x()*(M_PI/180));
 
             actions = backtrack;
           }
